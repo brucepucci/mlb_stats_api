@@ -394,4 +394,5 @@ class MLBStatsClient:
             Venue data
         """
         endpoint = VENUE.format(venue_id=venue_id)
-        return self.get(endpoint)
+        # hydrate=location includes city, state, coordinates, etc.
+        return self.get(endpoint, params={"hydrate": "location"})
