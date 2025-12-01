@@ -75,5 +75,96 @@ def init_db(ctx: click.Context) -> None:
     click.echo(f"Database initialized at {db_path}")
 
 
+@cli.group()
+def sync() -> None:
+    """Sync data from MLB Stats API."""
+
+
+@sync.command("games")
+@click.option(
+    "--start-date",
+    type=str,
+    help="Start date (YYYY-MM-DD)",
+)
+@click.option(
+    "--end-date",
+    type=str,
+    help="End date (YYYY-MM-DD)",
+)
+@click.option(
+    "--season",
+    type=int,
+    help="Season year (e.g., 2024). Alternative to date range.",
+)
+@click.pass_context
+def sync_games(
+    ctx: click.Context,
+    start_date: str | None,
+    end_date: str | None,
+    season: int | None,
+) -> None:
+    """Sync games for date range or season.
+
+    Fetches game schedules, team and venue reference data, and game
+    details from the MLB Stats API.
+
+    Examples:
+
+        mlb-stats sync games --start-date 2024-07-01 --end-date 2024-07-07
+
+        mlb-stats sync games --season 2024
+    """
+    from mlb_stats.api.client import MLBStatsClient
+    from mlb_stats.collectors.game import sync_games_for_date_range
+    from mlb_stats.utils.dates import parse_date, season_dates
+
+    # Validate options
+    if season:
+        if start_date or end_date:
+            raise click.UsageError("Cannot use --season with --start-date/--end-date")
+        start_date, end_date = season_dates(season)
+    elif not (start_date and end_date):
+        raise click.UsageError(
+            "Must provide either --season or both --start-date and --end-date"
+        )
+
+    # Validate date format
+    try:
+        parse_date(start_date)
+        parse_date(end_date)
+    except ValueError as e:
+        raise click.UsageError(f"Invalid date format: {e}")
+
+    db_path = ctx.obj["db_path"]
+    cache_dir = ctx.obj["cache_dir"]
+
+    # Initialize database if needed
+    conn = do_init_db(db_path)
+
+    # Create client
+    client = MLBStatsClient(cache_dir=cache_dir)
+
+    # Progress callback for simple text output
+    def progress(current: int, total: int) -> None:
+        click.echo(f"\rSyncing game {current}/{total}...", nl=False)
+
+    click.echo(f"Syncing games from {start_date} to {end_date}")
+
+    try:
+        success, failures = sync_games_for_date_range(
+            client, conn, start_date, end_date, progress_callback=progress
+        )
+
+        # Clear progress line and print summary
+        click.echo()
+        click.echo(f"Sync complete: {success} games synced, {failures} failures")
+
+        if failures > 0:
+            ctx.exit(1)
+
+    finally:
+        conn.close()
+
+
 if __name__ == "__main__":
     cli()

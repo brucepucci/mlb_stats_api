@@ -394,4 +394,6 @@ class MLBStatsClient:
             Venue data
         """
         endpoint = VENUE.format(venue_id=venue_id)
-        return self.get(endpoint)
+        # hydrate=location includes city, state, coordinates, etc.
+        # hydrate=timezone includes timezone id (e.g., "America/New_York")
+        return self.get(endpoint, params={"hydrate": "location,timezone"})
