@@ -7,33 +7,18 @@ from typing import Callable
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.schedule import fetch_schedule
-from mlb_stats.collectors.venue import sync_venue
 from mlb_stats.db.queries import (
     delete_game_officials,
     upsert_game,
     upsert_game_official,
     upsert_team,
+    upsert_venue,
 )
 from mlb_stats.models.game import transform_game, transform_officials
-from mlb_stats.models.team import transform_team
+from mlb_stats.models.team import transform_team_from_game_feed
+from mlb_stats.models.venue import transform_venue_from_game_feed
 
 logger = logging.getLogger(__name__)
-
-
-def _sync_team_from_response(conn: sqlite3.Connection, response: dict) -> None:
-    """Sync team from an already-fetched API response.
-
-    Parameters
-    ----------
-    conn : sqlite3.Connection
-        Database connection
-    response : dict
-        Already-fetched team API response
-    """
-    fetched_at = datetime.now(timezone.utc).isoformat()
-    row = transform_team(response, fetched_at)
-    upsert_team(conn, row)
-    logger.info("Synced team %s: %s", row.get("id"), row.get("name"))
 
 
 def sync_game(
@@ -59,13 +44,14 @@ def sync_game(
 
     Notes
     -----
+    Extracts all reference data (venues, teams) from the game feed itself,
+    eliminating separate API calls. The game feed is cached for Final games.
+
     Order of operations (for foreign key compliance):
-    1. Sync game venue
-    2. Fetch team data to get their home venue IDs
-    3. Sync team home venues (teams table has FK to venues)
-    4. Sync teams
-    5. Insert game
-    6. Delete then insert officials
+    1. Extract and sync game venue from gameData.venue
+    2. Extract and sync teams from gameData.teams (venue_id refs game venue)
+    3. Insert game
+    4. Delete then insert officials
     """
     logger.info("Syncing game %d", game_pk)
 
@@ -74,64 +60,59 @@ def sync_game(
         fetched_at = datetime.now(timezone.utc).isoformat()
         game_feed = client.get_game_feed(game_pk)
 
-        # Extract IDs from game data
+        # Extract data from game feed
         game_data = game_feed.get("gameData", {})
         teams = game_data.get("teams", {})
-        venue = game_data.get("venue", {})
+        venue_data = game_data.get("venue", {})
 
-        away_team_id = teams.get("away", {}).get("id")
-        home_team_id = teams.get("home", {}).get("id")
-        venue_id = venue.get("id")
+        away_team_data = teams.get("away", {})
+        home_team_data = teams.get("home", {})
 
-        # Collect all venue IDs that need to be synced (game venue + team home venues)
-        venue_ids_to_sync = set()
-        if venue_id:
-            venue_ids_to_sync.add(venue_id)
+        # 1. Sync game venue (extracted from game feed - has full location data)
+        if venue_data.get("id"):
+            venue_row = transform_venue_from_game_feed(venue_data, fetched_at)
+            upsert_venue(conn, venue_row)
+            logger.debug("Synced venue %s: %s", venue_row.get("id"), venue_row.get("name"))
 
-        # Fetch team data to get their home venue IDs
-        team_responses = {}
-        if away_team_id:
-            team_responses[away_team_id] = client.get_team(away_team_id)
-            away_team_venue = (
-                team_responses[away_team_id]
-                .get("teams", [{}])[0]
-                .get("venue", {})
-                .get("id")
+        # 2. Sync team home venues (minimal data - just id/name from game feed)
+        # This is needed because teams table has FK to venues
+        for team_data in [away_team_data, home_team_data]:
+            team_venue = team_data.get("venue", {})
+            if team_venue.get("id"):
+                # Create minimal venue record if it doesn't exist
+                # Full data will be synced when we encounter a game at that venue
+                venue_row = transform_venue_from_game_feed(team_venue, fetched_at)
+                upsert_venue(conn, venue_row)
+                logger.debug(
+                    "Synced team venue %s: %s",
+                    venue_row.get("id"),
+                    venue_row.get("name"),
+                )
+
+        # 3. Sync teams (extracted from game feed)
+        if away_team_data.get("id"):
+            away_team_row = transform_team_from_game_feed(away_team_data, fetched_at)
+            upsert_team(conn, away_team_row)
+            logger.debug(
+                "Synced team %s: %s",
+                away_team_row.get("id"),
+                away_team_row.get("name"),
             )
-            if away_team_venue:
-                venue_ids_to_sync.add(away_team_venue)
 
-        if home_team_id and home_team_id != away_team_id:
-            team_responses[home_team_id] = client.get_team(home_team_id)
-            home_team_venue = (
-                team_responses[home_team_id]
-                .get("teams", [{}])[0]
-                .get("venue", {})
-                .get("id")
+        if home_team_data.get("id"):
+            home_team_row = transform_team_from_game_feed(home_team_data, fetched_at)
+            upsert_team(conn, home_team_row)
+            logger.debug(
+                "Synced team %s: %s",
+                home_team_row.get("id"),
+                home_team_row.get("name"),
             )
-            if home_team_venue:
-                venue_ids_to_sync.add(home_team_venue)
 
-        # Sync all venues first (before teams, due to FK)
-        for vid in venue_ids_to_sync:
-            sync_venue(client, conn, vid)
-
-        # Now sync teams (using already-fetched responses)
-        if away_team_id and away_team_id in team_responses:
-            _sync_team_from_response(conn, team_responses[away_team_id])
-
-        if (
-            home_team_id
-            and home_team_id != away_team_id
-            and home_team_id in team_responses
-        ):
-            _sync_team_from_response(conn, team_responses[home_team_id])
-
-        # Transform and upsert game
+        # 4. Transform and upsert game
         game_row = transform_game(game_feed, fetched_at)
         upsert_game(conn, game_row)
 
-        # Delete and re-insert officials for idempotent sync
+        # 5. Delete and re-insert officials for idempotent sync
         delete_game_officials(conn, game_pk)
 
         official_rows = transform_officials(game_feed, game_pk)
@@ -143,8 +124,8 @@ def sync_game(
         logger.info(
             "Synced game %d: %s @ %s (%s - %s)",
             game_pk,
-            teams.get("away", {}).get("name", "Away"),
-            teams.get("home", {}).get("name", "Home"),
+            away_team_data.get("name", "Away"),
+            home_team_data.get("name", "Home"),
             game_row.get("away_score"),
             game_row.get("home_score"),
         )

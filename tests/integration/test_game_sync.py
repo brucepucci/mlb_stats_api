@@ -219,36 +219,13 @@ class TestSyncGame:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
-        sample_team: dict,
     ) -> None:
-        """Test that sync_game creates game with team/venue references."""
-        # Mock venue
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
+        """Test that sync_game creates game with team/venue references.
 
-        # Mock away team (Giants)
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/137",
-            json={
-                "teams": [{"id": 137, "name": "San Francisco Giants", "active": True}]
-            },
-            status=200,
-        )
-
-        # Mock home team (Dodgers)
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/119",
-            json=sample_team,
-            status=200,
-        )
-
-        # Mock game feed
+        Teams and venues are now extracted from the game feed itself,
+        eliminating separate API calls.
+        """
+        # Mock game feed (contains teams, venues, and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -264,13 +241,14 @@ class TestSyncGame:
         cursor = temp_db.execute("SELECT gamePk FROM games WHERE gamePk = 745927")
         assert cursor.fetchone() is not None
 
-        # Verify teams inserted as side effect
+        # Verify teams inserted as side effect (extracted from game feed)
         cursor = temp_db.execute("SELECT COUNT(*) FROM teams")
         assert cursor.fetchone()[0] == 2
 
-        # Verify venue inserted as side effect
+        # Verify venues inserted as side effect (game venue + team home venues)
+        # Game venue (Dodger Stadium id=22) + team home venues (Oracle Park id=2395)
         cursor = temp_db.execute("SELECT COUNT(*) FROM venues")
-        assert cursor.fetchone()[0] == 1
+        assert cursor.fetchone()[0] == 2
 
     @responses.activate
     def test_game_includes_write_metadata(
@@ -278,32 +256,9 @@ class TestSyncGame:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
-        sample_team: dict,
     ) -> None:
         """Test that synced game includes write metadata."""
-        # Mock venue
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-
-        # Mock teams
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/137",
-            json={"teams": [{"id": 137, "name": "Giants", "active": True}]},
-            status=200,
-        )
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/119",
-            json=sample_team,
-            status=200,
-        )
-
-        # Mock game feed
+        # Mock game feed (contains teams, venues, and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -333,7 +288,6 @@ class TestSyncGamesForDateRange:
         mock_client: MLBStatsClient,
         sample_schedule: dict,
         sample_game_feed: dict,
-        sample_team: dict,
     ) -> None:
         """Test syncing multiple games from schedule."""
         # Mock schedule
@@ -344,31 +298,7 @@ class TestSyncGamesForDateRange:
             status=200,
         )
 
-        # Mock venue
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-
-        # Mock teams
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/137",
-            json={
-                "teams": [{"id": 137, "name": "San Francisco Giants", "active": True}]
-            },
-            status=200,
-        )
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/119",
-            json=sample_team,
-            status=200,
-        )
-
-        # Mock game feed
+        # Mock game feed (contains teams, venues, and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -411,7 +341,6 @@ class TestSyncGamesForDateRange:
         mock_client: MLBStatsClient,
         sample_schedule: dict,
         sample_game_feed: dict,
-        sample_team: dict,
     ) -> None:
         """Test that progress callback is invoked."""
         # Mock schedule
@@ -422,29 +351,7 @@ class TestSyncGamesForDateRange:
             status=200,
         )
 
-        # Mock venue
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-
-        # Mock teams
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/137",
-            json={"teams": [{"id": 137, "name": "Giants", "active": True}]},
-            status=200,
-        )
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/teams/119",
-            json=sample_team,
-            status=200,
-        )
-
-        # Mock game feed
+        # Mock game feed (contains teams, venues, and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -478,39 +385,9 @@ class TestIdempotentSync:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
-        sample_team: dict,
     ) -> None:
         """Test that re-syncing updates _written_at timestamp."""
-        # Mock venue
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-
-        # Mock teams (twice each)
-        for _ in range(2):
-            responses.add(
-                responses.GET,
-                f"{BASE_URL}v1/teams/137",
-                json={"teams": [{"id": 137, "name": "Giants", "active": True}]},
-                status=200,
-            )
-            responses.add(
-                responses.GET,
-                f"{BASE_URL}v1/teams/119",
-                json=sample_team,
-                status=200,
-            )
-
-        # Mock game feed (twice)
+        # Mock game feed (twice - once for each sync)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",

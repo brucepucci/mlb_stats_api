@@ -7,7 +7,6 @@ from typing import Callable
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.game import sync_game
-from mlb_stats.collectors.player import sync_player
 from mlb_stats.collectors.schedule import fetch_schedule
 from mlb_stats.db.queries import (
     delete_game_batting,
@@ -15,14 +14,51 @@ from mlb_stats.db.queries import (
     get_game_pks_for_date_range,
     upsert_game_batting,
     upsert_game_pitching,
+    upsert_player,
 )
 from mlb_stats.models.boxscore import (
     extract_player_ids,
     transform_batting,
     transform_pitching,
 )
+from mlb_stats.models.player import transform_player_from_game_feed
 
 logger = logging.getLogger(__name__)
+
+
+def _get_player_team_mapping(boxscore: dict) -> dict[int, int]:
+    """Build mapping of player ID to team ID from boxscore.
+
+    Parameters
+    ----------
+    boxscore : dict
+        Boxscore data
+
+    Returns
+    -------
+    dict[int, int]
+        Mapping of player_id -> team_id
+    """
+    player_to_team = {}
+    teams = boxscore.get("teams", {})
+
+    for side in ("away", "home"):
+        team_data = teams.get(side, {})
+        team_id = team_data.get("team", {}).get("id")
+        if not team_id:
+            continue
+
+        players = team_data.get("players", {})
+        for player_key in players:
+            # Player keys are like "ID660271"
+            if player_key.startswith("ID"):
+                try:
+                    player_id = int(player_key[2:])
+                    player_to_team[player_id] = team_id
+                except ValueError:
+                    pass
+
+    return player_to_team
 
 
 def sync_boxscore(
@@ -48,21 +84,27 @@ def sync_boxscore(
 
     Notes
     -----
+    Extracts player data from the game feed (cached for Final games),
+    eliminating separate player API calls.
+
     Order of operations (for foreign key compliance):
-    1. Fetch boxscore (cached if Final)
-    2. Sync all players from boxscore (fresh fetch for each)
+    1. Sync game (extracts teams/venues from game feed)
+    2. Extract and sync players from gameData.players
     3. Delete existing batting/pitching records for game
     4. Insert new batting/pitching records
     """
     logger.info("Syncing boxscore for game %d", game_pk)
 
     try:
-        # Fetch boxscore (cached if Final)
         fetched_at = datetime.now(timezone.utc).isoformat()
+
+        # Fetch game feed (cached if Final) - has player data in gameData.players
+        game_feed = client.get_game_feed(game_pk)
+
+        # Fetch boxscore (cached if Final) - has batting/pitching stats
         boxscore = client.get_boxscore(game_pk)
 
         # Check if game has valid boxscore data
-        # Skip if no player data (game not started or postponed)
         teams = boxscore.get("teams", {})
         away_players = teams.get("away", {}).get("players", {})
         home_players = teams.get("home", {}).get("players", {})
@@ -74,30 +116,50 @@ def sync_boxscore(
             )
             return False
 
-        # Sync game first (for FK constraints)
-        # This ensures the game record exists before inserting batting/pitching
+        # 1. Sync game (extracts teams/venues from game feed)
         sync_game(client, conn, game_pk)
 
-        # Extract and sync all players
+        # 2. Extract and sync players from game feed
+        # Build player -> team mapping from boxscore
+        player_to_team = _get_player_team_mapping(boxscore)
+
+        # Get player data from gameData.players
+        game_data_players = game_feed.get("gameData", {}).get("players", {})
         player_ids = extract_player_ids(boxscore)
         logger.debug("Found %d players in boxscore", len(player_ids))
 
         for player_id in player_ids:
-            try:
-                sync_player(client, conn, player_id)
-            except Exception as e:
-                logger.warning("Failed to sync player %d: %s", player_id, e)
-                # Continue with other players
+            player_key = f"ID{player_id}"
+            player_data = game_data_players.get(player_key, {})
 
-        # Transform batting and pitching data
+            if player_data:
+                # Get team association from boxscore
+                team_id = player_to_team.get(player_id)
+                player_row = transform_player_from_game_feed(
+                    player_data, fetched_at, team_id
+                )
+                upsert_player(conn, player_row)
+                logger.debug(
+                    "Synced player %s: %s",
+                    player_row.get("id"),
+                    player_row.get("fullName"),
+                )
+            else:
+                logger.warning(
+                    "Player %d not found in gameData.players for game %d",
+                    player_id,
+                    game_pk,
+                )
+
+        # 3. Transform batting and pitching data
         batting_rows = transform_batting(boxscore, game_pk, fetched_at)
         pitching_rows = transform_pitching(boxscore, game_pk, fetched_at)
 
-        # Delete existing records for idempotent sync
+        # 4. Delete existing records for idempotent sync
         delete_game_batting(conn, game_pk)
         delete_game_pitching(conn, game_pk)
 
-        # Insert new records
+        # 5. Insert new records
         for row in batting_rows:
             upsert_game_batting(conn, row)
 
