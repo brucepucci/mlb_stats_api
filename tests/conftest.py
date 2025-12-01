@@ -1,0 +1,217 @@
+"""Shared pytest fixtures for MLB Stats Collector tests."""
+
+import sqlite3
+from pathlib import Path
+
+import pytest
+
+from mlb_stats.api.cache import ResponseCache
+from mlb_stats.api.client import MLBStatsClient
+from mlb_stats.db.connection import init_db
+
+
+@pytest.fixture
+def temp_db(tmp_path: Path) -> sqlite3.Connection:
+    """Create a temporary test database with all tables.
+
+    Yields
+    ------
+    sqlite3.Connection
+        Connection to temporary database
+    """
+    db_path = tmp_path / "test.db"
+    conn = init_db(db_path)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def temp_db_path(tmp_path: Path) -> Path:
+    """Get path for a temporary database (not yet created).
+
+    Returns
+    -------
+    Path
+        Path to temporary database file
+    """
+    return tmp_path / "test.db"
+
+
+@pytest.fixture
+def temp_cache_dir(tmp_path: Path) -> Path:
+    """Create a temporary cache directory.
+
+    Returns
+    -------
+    Path
+        Path to temporary cache directory
+    """
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    return cache_dir
+
+
+@pytest.fixture
+def response_cache(temp_cache_dir: Path) -> ResponseCache:
+    """Create a ResponseCache instance with temporary directory.
+
+    Returns
+    -------
+    ResponseCache
+        Cache instance for testing
+    """
+    return ResponseCache(temp_cache_dir)
+
+
+@pytest.fixture
+def mock_client(temp_cache_dir: Path) -> MLBStatsClient:
+    """Create an MLBStatsClient with mocked responses enabled.
+
+    Returns
+    -------
+    MLBStatsClient
+        Client configured for testing with cache
+    """
+    return MLBStatsClient(
+        request_delay=0.0,  # No delay for tests
+        max_retries=1,
+        cache_dir=temp_cache_dir,
+        use_cache=True,
+    )
+
+
+@pytest.fixture
+def sample_game_feed() -> dict:
+    """Sample game feed response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal game feed structure
+    """
+    return {
+        "gamePk": 745927,
+        "gameData": {
+            "game": {"pk": 745927, "type": "R", "season": "2024"},
+            "datetime": {"dateTime": "2024-07-02T02:10:00Z"},
+            "status": {"abstractGameState": "Final", "detailedState": "Final"},
+            "teams": {
+                "away": {"id": 137, "name": "San Francisco Giants"},
+                "home": {"id": 119, "name": "Los Angeles Dodgers"},
+            },
+            "venue": {"id": 22, "name": "Dodger Stadium"},
+        },
+        "liveData": {
+            "boxscore": {
+                "teams": {
+                    "away": {"teamStats": {}, "players": {}},
+                    "home": {"teamStats": {}, "players": {}},
+                }
+            }
+        },
+    }
+
+
+@pytest.fixture
+def sample_schedule() -> dict:
+    """Sample schedule response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal schedule structure
+    """
+    return {
+        "dates": [
+            {
+                "date": "2024-07-01",
+                "games": [
+                    {
+                        "gamePk": 745927,
+                        "gameDate": "2024-07-02T02:10:00Z",
+                        "status": {
+                            "abstractGameState": "Final",
+                            "detailedState": "Final",
+                        },
+                        "teams": {
+                            "away": {
+                                "team": {"id": 137, "name": "San Francisco Giants"}
+                            },
+                            "home": {
+                                "team": {"id": 119, "name": "Los Angeles Dodgers"}
+                            },
+                        },
+                        "venue": {"id": 22, "name": "Dodger Stadium"},
+                    }
+                ],
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def sample_player() -> dict:
+    """Sample player response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal player structure
+    """
+    return {
+        "people": [
+            {
+                "id": 660271,
+                "fullName": "Shohei Ohtani",
+                "firstName": "Shohei",
+                "lastName": "Ohtani",
+                "primaryNumber": "17",
+                "birthDate": "1994-07-05",
+                "active": True,
+                "primaryPosition": {"code": "Y", "name": "Two-Way Player"},
+                "batSide": {"code": "L", "description": "Left"},
+                "pitchHand": {"code": "R", "description": "Right"},
+                "currentTeam": {"id": 119, "name": "Los Angeles Dodgers"},
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def sample_team() -> dict:
+    """Sample team response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal team structure
+    """
+    return {
+        "teams": [
+            {
+                "id": 119,
+                "name": "Los Angeles Dodgers",
+                "teamCode": "lan",
+                "abbreviation": "LAD",
+                "teamName": "Dodgers",
+                "locationName": "Los Angeles",
+                "active": True,
+                "league": {"id": 104, "name": "National League"},
+                "division": {"id": 203, "name": "National League West"},
+                "venue": {"id": 22, "name": "Dodger Stadium"},
+            }
+        ]
+    }
+
+
+# Fixtures directory path helper
+@pytest.fixture
+def fixtures_dir() -> Path:
+    """Get path to test fixtures directory.
+
+    Returns
+    -------
+    Path
+        Path to fixtures directory
+    """
+    return Path(__file__).parent / "fixtures"
