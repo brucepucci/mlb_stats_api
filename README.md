@@ -13,7 +13,7 @@ A Python CLI application that collects MLB game data from the MLB Stats API and 
 
 ## Installation
 
-Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 # Clone the repository
@@ -21,23 +21,85 @@ git clone https://github.com/yourusername/mlb-stats.git
 cd mlb-stats
 
 # Install dependencies
-make install
+uv sync
 
 # Initialize the database
-mlb-stats init-db
+uv run mlb-stats init-db
 ```
 
-## Quick Start
+## CLI Usage
+
+All commands should be run with `uv run` prefix.
+
+### Basic Commands
 
 ```bash
+# Show version
+uv run mlb-stats --version
+
+# Show help
+uv run mlb-stats --help
+
 # Initialize the database (creates all tables)
-mlb-stats init-db
+uv run mlb-stats init-db
+```
 
-# Check version
-mlb-stats --version
+### Syncing Games
 
-# Get help
-mlb-stats --help
+Fetch game data from the MLB Stats API and store in the database.
+
+```bash
+# Sync games for a specific date range
+uv run mlb-stats sync games --start-date 2024-07-01 --end-date 2024-07-07
+
+# Sync all games for a season
+uv run mlb-stats sync games --season 2024
+```
+
+### Global Options
+
+These options can be used with any command:
+
+```bash
+# Increase verbosity (-v for INFO, -vv for DEBUG)
+uv run mlb-stats -v sync games --start-date 2024-07-01 --end-date 2024-07-01
+uv run mlb-stats -vv sync games --start-date 2024-07-01 --end-date 2024-07-01
+
+# Suppress output (ERROR level only)
+uv run mlb-stats --quiet sync games --season 2024
+
+# Use a custom database path (default: data/mlb_stats.db)
+uv run mlb-stats --db-path /path/to/custom.db sync games --season 2024
+
+# Use a custom cache directory (default: cache/)
+uv run mlb-stats --cache-dir /path/to/cache sync games --season 2024
+```
+
+### Examples
+
+```bash
+# Sync a single day of games with verbose output
+uv run mlb-stats -v sync games --start-date 2024-06-15 --end-date 2024-06-15
+
+# Sync Opening Day 2024
+uv run mlb-stats sync games --start-date 2024-03-28 --end-date 2024-03-28
+
+# Sync the entire 2023 season (this will take a while)
+uv run mlb-stats sync games --season 2023
+```
+
+### Querying the Database
+
+After syncing, you can query the SQLite database directly:
+
+```bash
+# Open the database with sqlite3
+sqlite3 data/mlb_stats.db
+
+# Example queries
+sqlite3 data/mlb_stats.db "SELECT COUNT(*) FROM games;"
+sqlite3 data/mlb_stats.db "SELECT name, abbreviation FROM teams ORDER BY name;"
+sqlite3 data/mlb_stats.db "SELECT gamePk, gameDate, away_score, home_score FROM games LIMIT 10;"
 ```
 
 ## Development

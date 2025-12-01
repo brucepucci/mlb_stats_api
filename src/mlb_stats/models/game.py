@@ -161,7 +161,7 @@ def _extract_attendance(boxscore_info: list[dict]) -> int | None:
     """
     for info in boxscore_info:
         if info.get("label") == "Att":
-            value = info.get("value", "").replace(",", "")
+            value = info.get("value", "").replace(",", "").rstrip(".")
             try:
                 return int(value)
             except (ValueError, TypeError):

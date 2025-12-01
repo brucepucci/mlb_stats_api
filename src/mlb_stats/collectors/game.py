@@ -7,7 +7,6 @@ from typing import Callable
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.schedule import fetch_schedule
-from mlb_stats.collectors.team import sync_team
 from mlb_stats.collectors.venue import sync_venue
 from mlb_stats.db.queries import (
     delete_game_officials,

@@ -78,7 +78,6 @@ def init_db(ctx: click.Context) -> None:
 @cli.group()
 def sync() -> None:
     """Sync data from MLB Stats API."""
-    pass
 
 
 @sync.command("games")

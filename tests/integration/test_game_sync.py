@@ -2,9 +2,7 @@
 
 import json
 import sqlite3
-from pathlib import Path
 
-import pytest
 import responses
 
 from mlb_stats.api.client import MLBStatsClient

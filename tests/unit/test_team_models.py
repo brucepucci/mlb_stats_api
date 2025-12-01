@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
 
 from mlb_stats.models.team import transform_team
 
