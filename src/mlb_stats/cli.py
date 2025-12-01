@@ -166,5 +166,100 @@ def sync_games(
         conn.close()
 
 
+@sync.command("boxscores")
+@click.argument("game_pk", type=int, required=False)
+@click.option(
+    "--start-date",
+    type=str,
+    help="Start date (YYYY-MM-DD)",
+)
+@click.option(
+    "--end-date",
+    type=str,
+    help="End date (YYYY-MM-DD)",
+)
+@click.pass_context
+def sync_boxscores(
+    ctx: click.Context,
+    game_pk: int | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> None:
+    """Sync boxscores (batting and pitching stats).
+
+    Can sync a single game by gamePk or a date range.
+    Players are automatically synced as they are encountered.
+
+    Examples:
+
+        mlb-stats sync boxscores 745927
+
+        mlb-stats sync boxscores --start-date 2024-07-01 --end-date 2024-07-07
+    """
+    from mlb_stats.api.client import MLBStatsClient
+    from mlb_stats.collectors.boxscore import (
+        sync_boxscore,
+        sync_boxscores_for_date_range,
+    )
+    from mlb_stats.utils.dates import parse_date
+
+    # Validate options
+    if game_pk is not None:
+        if start_date or end_date:
+            raise click.UsageError("Cannot use gamePk with --start-date/--end-date")
+    elif not (start_date and end_date):
+        raise click.UsageError(
+            "Must provide either gamePk or both --start-date and --end-date"
+        )
+
+    # Validate date format if provided
+    if start_date and end_date:
+        try:
+            parse_date(start_date)
+            parse_date(end_date)
+        except ValueError as e:
+            raise click.UsageError(f"Invalid date format: {e}")
+
+    db_path = ctx.obj["db_path"]
+    cache_dir = ctx.obj["cache_dir"]
+
+    # Initialize database if needed
+    conn = do_init_db(db_path)
+
+    # Create client
+    client = MLBStatsClient(cache_dir=cache_dir)
+
+    try:
+        if game_pk is not None:
+            # Single game sync
+            click.echo(f"Syncing boxscore for game {game_pk}")
+            success = sync_boxscore(client, conn, game_pk)
+            if success:
+                click.echo("Sync complete")
+            else:
+                click.echo("Sync failed (game may not have started)")
+                ctx.exit(1)
+        else:
+            # Date range sync
+            def progress(current: int, total: int) -> None:
+                click.echo(f"\rSyncing boxscore {current}/{total}...", nl=False)
+
+            click.echo(f"Syncing boxscores from {start_date} to {end_date}")
+
+            success, failures = sync_boxscores_for_date_range(
+                client, conn, start_date, end_date, progress_callback=progress
+            )
+
+            # Clear progress line and print summary
+            click.echo()
+            click.echo(f"Sync complete: {success} boxscores synced, {failures} failures")
+
+            if failures > 0:
+                ctx.exit(1)
+
+    finally:
+        conn.close()
+
+
 if __name__ == "__main__":
     cli()

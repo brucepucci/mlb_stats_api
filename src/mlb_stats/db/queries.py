@@ -108,6 +108,81 @@ def get_game_pks_for_date_range(
     return [row[0] for row in cursor.fetchall()]
 
 
+def upsert_player(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace player record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Player row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "players", row)
+
+
+def upsert_game_batting(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace game_batting record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Game batting row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "game_batting", row)
+
+
+def upsert_game_pitching(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace game_pitching record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Game pitching row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "game_pitching", row)
+
+
+def delete_game_batting(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all batting records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM game_batting WHERE gamePk = ?", (gamePk,))
+
+
+def delete_game_pitching(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all pitching records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM game_pitching WHERE gamePk = ?", (gamePk,))
+
+
 def _upsert(conn: sqlite3.Connection, table: str, row: dict) -> None:
     """Generic INSERT OR REPLACE helper.
 

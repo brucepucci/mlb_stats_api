@@ -204,6 +204,88 @@ def sample_team() -> dict:
     }
 
 
+@pytest.fixture
+def sample_boxscore() -> dict:
+    """Sample boxscore response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal boxscore structure with batting and pitching stats
+    """
+    return {
+        "teams": {
+            "away": {
+                "team": {"id": 137, "name": "San Francisco Giants"},
+                "players": {
+                    "ID660271": {
+                        "person": {"id": 660271, "fullName": "Shohei Ohtani"},
+                        "jerseyNumber": "17",
+                        "position": {
+                            "code": "10",
+                            "name": "Designated Hitter",
+                            "abbreviation": "DH",
+                        },
+                        "battingOrder": "100",
+                        "stats": {
+                            "batting": {
+                                "gamesPlayed": 1,
+                                "runs": 1,
+                                "hits": 2,
+                                "homeRuns": 1,
+                                "strikeOuts": 1,
+                                "baseOnBalls": 0,
+                                "atBats": 4,
+                                "rbi": 2,
+                                "avg": ".500",
+                                "obp": ".500",
+                                "slg": "1.250",
+                                "ops": "1.750",
+                            }
+                        },
+                        "gameStatus": {"isCurrentBatter": False},
+                    }
+                },
+                "pitchers": [543243],
+                "battingOrder": [660271],
+            },
+            "home": {
+                "team": {"id": 119, "name": "Los Angeles Dodgers"},
+                "players": {
+                    "ID543243": {
+                        "person": {"id": 543243, "fullName": "Test Pitcher"},
+                        "jerseyNumber": "22",
+                        "position": {
+                            "code": "1",
+                            "name": "Pitcher",
+                            "abbreviation": "P",
+                        },
+                        "stats": {
+                            "pitching": {
+                                "gamesPlayed": 1,
+                                "gamesStarted": 1,
+                                "inningsPitched": "6.0",
+                                "strikeOuts": 8,
+                                "baseOnBalls": 2,
+                                "hits": 5,
+                                "earnedRuns": 2,
+                                "runs": 3,
+                                "homeRuns": 1,
+                                "era": "3.00",
+                                "whip": "1.17",
+                            }
+                        },
+                        "seasonStats": {"pitching": {"note": "W"}},
+                        "gameStatus": {"isStartingPitcher": True},
+                    }
+                },
+                "pitchers": [543243],
+                "battingOrder": [],
+            },
+        }
+    }
+
+
 # Fixtures directory path helper
 @pytest.fixture
 def fixtures_dir() -> Path:
