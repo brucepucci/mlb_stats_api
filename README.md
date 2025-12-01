@@ -56,6 +56,23 @@ uv run mlb-stats sync games --start-date 2024-07-01 --end-date 2024-07-07
 uv run mlb-stats sync games --season 2024
 ```
 
+### Syncing Box Scores
+
+Fetch box score data (batting and pitching stats) for games. This also syncs player data.
+
+```bash
+# Sync boxscore for a specific game
+uv run mlb-stats sync boxscores 745927
+
+# Sync boxscores for a date range
+uv run mlb-stats sync boxscores --start-date 2024-07-01 --end-date 2024-07-07
+
+# Sync boxscores for a season
+uv run mlb-stats sync boxscores --season 2024
+```
+
+**Note:** The `sync boxscores` command will automatically sync the game record and all players that appear in the boxscore. Games don't need to be synced separately first.
+
 ### Global Options
 
 These options can be used with any command:
@@ -86,6 +103,10 @@ uv run mlb-stats sync games --start-date 2024-03-28 --end-date 2024-03-28
 
 # Sync the entire 2023 season (this will take a while)
 uv run mlb-stats sync games --season 2023
+
+# Sync games then boxscores for a week
+uv run mlb-stats sync games --start-date 2024-07-01 --end-date 2024-07-07
+uv run mlb-stats sync boxscores --start-date 2024-07-01 --end-date 2024-07-07
 ```
 
 ### Querying the Database
@@ -100,6 +121,32 @@ sqlite3 data/mlb_stats.db
 sqlite3 data/mlb_stats.db "SELECT COUNT(*) FROM games;"
 sqlite3 data/mlb_stats.db "SELECT name, abbreviation FROM teams ORDER BY name;"
 sqlite3 data/mlb_stats.db "SELECT gamePk, gameDate, away_score, home_score FROM games LIMIT 10;"
+
+# Player batting stats for a game
+sqlite3 data/mlb_stats.db "
+  SELECT p.fullName, b.hits, b.homeRuns, b.rbi, b.avg
+  FROM game_batting b
+  JOIN players p ON b.player_id = p.id
+  WHERE b.gamePk = 745927
+  ORDER BY b.battingOrder;"
+
+# Top home run hitters across synced games
+sqlite3 data/mlb_stats.db "
+  SELECT p.fullName, SUM(b.homeRuns) as total_hr
+  FROM game_batting b
+  JOIN players p ON b.player_id = p.id
+  GROUP BY p.id
+  HAVING total_hr > 0
+  ORDER BY total_hr DESC
+  LIMIT 10;"
+
+# Pitching stats for a game
+sqlite3 data/mlb_stats.db "
+  SELECT p.fullName, pit.inningsPitched, pit.strikeOuts, pit.earnedRuns, pit.note
+  FROM game_pitching pit
+  JOIN players p ON pit.player_id = p.id
+  WHERE pit.gamePk = 745927
+  ORDER BY pit.pitchingOrder;"
 ```
 
 ## Development
@@ -133,9 +180,24 @@ src/mlb_stats/
 │   └── endpoints.py     # API endpoint constants
 ├── db/
 │   ├── connection.py    # SQLite connection management
-│   └── schema.py        # Database schema (all tables)
+│   ├── schema.py        # Database schema (all tables)
+│   └── queries.py       # Database upsert/query helpers
+├── models/
+│   ├── team.py          # Team transformer
+│   ├── venue.py         # Venue transformer
+│   ├── game.py          # Game transformer
+│   ├── player.py        # Player transformer
+│   └── boxscore.py      # Batting/pitching transformers
+├── collectors/
+│   ├── schedule.py      # Schedule fetcher
+│   ├── game.py          # Game sync orchestrator
+│   ├── team.py          # Team sync (on-demand)
+│   ├── venue.py         # Venue sync (on-demand)
+│   ├── player.py        # Player sync (always fresh)
+│   └── boxscore.py      # Boxscore sync orchestrator
 └── utils/
     ├── logging.py       # Logging configuration
+    ├── dates.py         # Date parsing/formatting
     └── metadata.py      # Write metadata helpers
 ```
 
