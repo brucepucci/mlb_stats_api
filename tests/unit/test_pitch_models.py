@@ -325,6 +325,79 @@ class TestTransformBattedBall:
         assert row["awayScore"] == 1
         assert row["homeScore"] == 0
 
+    def test_extracts_enhanced_statcast_fields(self) -> None:
+        """Test extraction of enhanced Statcast fields (2024+)."""
+        play = {
+            "about": {"atBatIndex": 5, "inning": 3, "halfInning": "bottom"},
+            "result": {
+                "event": "Home Run",
+                "eventType": "home_run",
+                "description": "Shohei Ohtani homers (25)",
+                "rbi": 2,
+                "awayScore": 0,
+                "homeScore": 3,
+            },
+            "matchup": {
+                "batter": {"id": 660271},
+                "pitcher": {"id": 543243},
+            },
+            "playEvents": [
+                {
+                    "pitchNumber": 4,
+                    "playId": "test-play-id",
+                    "hitData": {
+                        "launchSpeed": 112.5,
+                        "launchAngle": 28,
+                        "totalDistance": 420,
+                        "trajectory": "fly_ball",
+                        "hardness": "hard",
+                        "location": "8",
+                        "coordinates": {"coordX": 125.0, "coordY": 50.0},
+                        "hitProbability": 0.95,
+                        "isBarrel": True,
+                        "batSpeed": 78.3,
+                        "isSwordSwing": False,
+                    },
+                }
+            ],
+        }
+        event = play["playEvents"][0]
+        row = transform_batted_ball(play, event, 745927, "2024-07-01T00:00:00Z")
+
+        # Enhanced Statcast fields
+        assert row["hitProbability"] == 0.95
+        assert row["isBarrel"] == 1
+        assert row["batSpeed"] == 78.3
+        assert row["isSwordSwing"] == 0
+
+    def test_handles_missing_enhanced_statcast_fields(self) -> None:
+        """Test that missing enhanced Statcast fields return None."""
+        play = {
+            "about": {"atBatIndex": 5, "inning": 3, "halfInning": "bottom"},
+            "result": {"event": "Single", "eventType": "single"},
+            "matchup": {
+                "batter": {"id": 660271},
+                "pitcher": {"id": 543243},
+            },
+            "playEvents": [
+                {
+                    "pitchNumber": 2,
+                    "hitData": {
+                        "launchSpeed": 95.0,
+                        "launchAngle": 10,
+                        # No enhanced Statcast fields (pre-2024 game)
+                    },
+                }
+            ],
+        }
+        event = play["playEvents"][0]
+        row = transform_batted_ball(play, event, 745927, "2024-07-01T00:00:00Z")
+
+        assert row["hitProbability"] is None
+        assert row["isBarrel"] is None
+        assert row["batSpeed"] is None
+        assert row["isSwordSwing"] is None
+
 
 class TestExtractPitchesFromPlay:
     """Tests for extract_pitches_from_play function."""

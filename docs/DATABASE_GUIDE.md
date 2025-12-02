@@ -310,6 +310,11 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | location | TEXT | Fielder position (1-9) |
 | coordinates_x | REAL | Spray chart X |
 | coordinates_y | REAL | Spray chart Y |
+| **Enhanced Statcast** | | |
+| hitProbability | REAL | xBA - expected batting average on contact |
+| isBarrel | INTEGER | 1 if barrel (EV >= 98 + optimal LA), 0 if not, NULL if unavailable |
+| batSpeed | REAL | Bat speed in mph (2024+ games only) |
+| isSwordSwing | INTEGER | 1 if sword swing (weak contact), 0 if not (2024+ games only) |
 
 **UNIQUE:** (gamePk, atBatIndex, pitchNumber)
 

@@ -6,7 +6,7 @@ Metadata columns are prefixed with underscore (_written_at, _git_hash, _version)
 
 import sqlite3
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 
 # SQL statements for each table
 # Note: MLB field names are preserved exactly (gamePk, fullName, strikeOuts, etc.)
@@ -510,6 +510,11 @@ CREATE TABLE IF NOT EXISTS batted_balls (
 
     -- Calculated metrics (if available from API)
     hitProbability REAL,                 -- xBA - expected batting average
+
+    -- Enhanced Statcast fields (2024+ for bat tracking)
+    isBarrel INTEGER,                    -- 1 if barrel, 0 if not, NULL if unavailable
+    batSpeed REAL,                       -- Bat speed in mph (2024+ data)
+    isSwordSwing INTEGER,                -- 1 if sword swing, 0 if not (2024+ data)
 
     -- Metadata
     playId TEXT,

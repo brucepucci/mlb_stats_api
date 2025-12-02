@@ -250,6 +250,10 @@ def transform_batted_ball(
         "homeScore": result.get("homeScore"),
         # Calculated metrics (if available from API)
         "hitProbability": hit_data.get("hitProbability"),
+        # Enhanced Statcast fields (2024+ for bat tracking)
+        "isBarrel": _bool_to_int(hit_data.get("isBarrel")),
+        "batSpeed": hit_data.get("batSpeed"),
+        "isSwordSwing": _bool_to_int(hit_data.get("isSwordSwing")),
         # Metadata
         "playId": event.get("playId"),
         "_fetched_at": fetched_at,

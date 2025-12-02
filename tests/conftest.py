@@ -351,6 +351,11 @@ def sample_game_feed() -> dict:
                                     "hardness": "hard",
                                     "location": "7",
                                     "coordinates": {"coordX": 80.0, "coordY": 120.0},
+                                    # Enhanced Statcast fields (2024+)
+                                    "hitProbability": 0.68,
+                                    "isBarrel": False,
+                                    "batSpeed": 69.2,
+                                    "isSwordSwing": False,
                                 },
                                 "pitchNumber": 2,
                                 "playId": "test-pitch-6",
@@ -836,6 +841,11 @@ def sample_play_with_hit() -> dict:
                         "coordX": 85.4,
                         "coordY": 125.2,
                     },
+                    # Enhanced Statcast fields (2024+)
+                    "hitProbability": 0.72,
+                    "isBarrel": False,
+                    "batSpeed": 71.5,
+                    "isSwordSwing": False,
                 },
                 "index": 3,
                 "playId": "hit-pitch-1",
