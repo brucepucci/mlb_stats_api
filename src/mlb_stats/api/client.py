@@ -376,4 +376,3 @@ class MLBStatsClient:
             Teams data
         """
         return self.get(TEAMS, params={"sportId": sport_id})
-

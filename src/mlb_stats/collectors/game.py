@@ -5,7 +5,6 @@ import sqlite3
 from datetime import datetime, timezone
 
 from mlb_stats.api.client import MLBStatsClient
-from mlb_stats.collectors.schedule import fetch_schedule
 from mlb_stats.db.queries import (
     delete_game_officials,
     upsert_game,

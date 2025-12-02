@@ -1,7 +1,9 @@
 """Player data transformation functions."""
 
 
-def _transform_player_data(player: dict, fetched_at: str, team_id: int | None = None) -> dict:
+def _transform_player_data(
+    player: dict, fetched_at: str, team_id: int | None = None
+) -> dict:
     """Transform raw player data to database row.
 
     Parameters
