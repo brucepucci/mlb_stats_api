@@ -455,9 +455,7 @@ class TestSyncBoxscoresForDateRange:
             status=200,
         )
 
-        sync_boxscores_for_date_range(
-            mock_client, temp_db, "2024-07-01", "2024-07-01"
-        )
+        sync_boxscores_for_date_range(mock_client, temp_db, "2024-07-01", "2024-07-01")
 
         # Now DB has game 745927. Without force_refresh, schedule API wouldn't be called.
         # With force_refresh=True, schedule API should be called again.
@@ -483,9 +481,9 @@ class TestSyncBoxscoresForDateRange:
         )
 
         # Count schedule calls before
-        schedule_calls_before = len([
-            c for c in responses.calls if "schedule" in str(c.request.url)
-        ])
+        schedule_calls_before = len(
+            [c for c in responses.calls if "schedule" in str(c.request.url)]
+        )
 
         # Sync with force_refresh
         success, failures = sync_boxscores_for_date_range(
@@ -500,7 +498,7 @@ class TestSyncBoxscoresForDateRange:
         assert failures == 0
 
         # Verify schedule API was called again (force_refresh bypassed DB check)
-        schedule_calls_after = len([
-            c for c in responses.calls if "schedule" in str(c.request.url)
-        ])
+        schedule_calls_after = len(
+            [c for c in responses.calls if "schedule" in str(c.request.url)]
+        )
         assert schedule_calls_after == schedule_calls_before + 1

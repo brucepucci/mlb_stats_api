@@ -196,10 +196,15 @@ def sync(
                 click.echo(f"\n=== Syncing {year} season ===")
 
                 def progress(current: int, total: int) -> None:
-                    click.echo(f"\r[{year}] Syncing game {current}/{total}...", nl=False)
+                    click.echo(
+                        f"\r[{year}] Syncing game {current}/{total}...", nl=False
+                    )
 
                 success, failures = sync_boxscores_for_date_range(
-                    client, conn, season_start, season_end,
+                    client,
+                    conn,
+                    season_start,
+                    season_end,
                     progress_callback=progress,
                     force_refresh=force_refresh,
                 )
@@ -209,7 +214,9 @@ def sync(
                 total_failures += failures
 
             click.echo(f"\n=== All seasons complete ===")
-            click.echo(f"Total: {total_success} games synced, {total_failures} failures")
+            click.echo(
+                f"Total: {total_success} games synced, {total_failures} failures"
+            )
 
             if total_failures > 0:
                 ctx.exit(1)
@@ -221,7 +228,11 @@ def sync(
             click.echo(f"Syncing games from {start_date} to {end_date}")
 
             success, failures = sync_boxscores_for_date_range(
-                client, conn, start_date, end_date, progress_callback=progress,
+                client,
+                conn,
+                start_date,
+                end_date,
+                progress_callback=progress,
                 force_refresh=force_refresh,
             )
 
