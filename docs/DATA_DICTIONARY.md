@@ -35,32 +35,7 @@ Reference table for team information. Always fetched fresh (never cached) to kee
 | league_name | TEXT | Yes | `teams[0].league.name` | League name (e.g., "National League") |
 | division_id | INTEGER | Yes | `teams[0].division.id` | Division ID |
 | division_name | TEXT | Yes | `teams[0].division.name` | Division name (e.g., "National League West") |
-| venue_id | INTEGER | Yes | `teams[0].venue.id` | Home venue ID (FK to venues) |
 | active | INTEGER | Yes | `teams[0].active` | 1 if active, 0 if inactive |
-
-**Foreign Keys:**
-- `venue_id` → `venues(id)`
-
----
-
-## venues
-
-Reference table for venue/stadium information. Always fetched fresh (never cached).
-
-**Source:** `/v1/venues/{venueId}`
-
-| Column | Type | Nullable | Source | Description |
-|--------|------|----------|--------|-------------|
-| id | INTEGER | No | `venues[0].id` | MLB venue ID (primary key) |
-| name | TEXT | No | `venues[0].name` | Venue name (e.g., "Dodger Stadium") |
-| city | TEXT | Yes | `venues[0].location.city` | City |
-| state | TEXT | Yes | `venues[0].location.state` | State |
-| stateAbbrev | TEXT | Yes | `venues[0].location.stateAbbrev` | State abbreviation |
-| country | TEXT | Yes | `venues[0].location.country` | Country |
-| latitude | REAL | Yes | `venues[0].location.defaultCoordinates.latitude` | Latitude |
-| longitude | REAL | Yes | `venues[0].location.defaultCoordinates.longitude` | Longitude |
-| elevation | REAL | Yes | `venues[0].location.elevation` | Elevation in feet |
-| timezone | TEXT | Yes | `venues[0].timeZone.id` | Timezone ID |
 
 ---
 
@@ -85,8 +60,7 @@ Core game information table. Cached only when game state is "Final".
 | abstractGameState | TEXT | Yes | `gameData.status.abstractGameState` | State: Final, Live, Preview |
 | detailedState | TEXT | Yes | `gameData.status.detailedState` | Detailed state (e.g., "Final", "In Progress") |
 | statusCode | TEXT | Yes | `gameData.status.statusCode` | Status code |
-| venue_id | INTEGER | Yes | `gameData.venue.id` | Venue ID (FK to venues) |
-| venue_name | TEXT | Yes | `gameData.venue.name` | Venue name (denormalized for convenience) |
+| venue_name | TEXT | Yes | `gameData.venue.name` | Venue name (denormalized) |
 | dayNight | TEXT | Yes | `gameData.datetime.dayNight` | "day" or "night" |
 | scheduledInnings | INTEGER | Yes | `gameData.game.scheduledInnings` | Scheduled innings (usually 9) |
 | inningCount | INTEGER | Yes | `liveData.linescore.currentInning` | Actual innings played |
@@ -107,7 +81,6 @@ Core game information table. Cached only when game state is "Final".
 **Foreign Keys:**
 - `away_team_id` → `teams(id)`
 - `home_team_id` → `teams(id)`
-- `venue_id` → `venues(id)`
 
 **Indices:**
 - `idx_games_date` on `gameDate`
@@ -347,7 +320,7 @@ WHERE (home_team_id = 119 OR away_team_id = 119)
 ORDER BY gameDate;
 ```
 
-### Get game with team and venue names
+### Get game with team names
 ```sql
 SELECT
     g.gamePk,
@@ -356,11 +329,10 @@ SELECT
     home.name AS home_team,
     g.away_score,
     g.home_score,
-    v.name AS venue
+    g.venue_name
 FROM games g
 JOIN teams away ON g.away_team_id = away.id
 JOIN teams home ON g.home_team_id = home.id
-LEFT JOIN venues v ON g.venue_id = v.id
 WHERE g.gamePk = 745927;
 ```
 

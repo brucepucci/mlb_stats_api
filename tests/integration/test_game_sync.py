@@ -7,10 +7,9 @@ import responses
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.api.endpoints import BASE_URL
-from mlb_stats.collectors.game import sync_game, sync_games_for_date_range
+from mlb_stats.collectors.game import sync_game
 from mlb_stats.collectors.schedule import fetch_schedule
 from mlb_stats.collectors.team import sync_team
-from mlb_stats.collectors.venue import sync_venue
 
 
 class TestSyncTeam:
@@ -24,15 +23,6 @@ class TestSyncTeam:
         sample_team: dict,
     ) -> None:
         """Test that sync_team inserts team record."""
-        # Must sync venue first since teams table has FK to venues
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-        sync_venue(mock_client, temp_db, 22)
-
         responses.add(
             responses.GET,
             f"{BASE_URL}v1/teams/119",
@@ -56,15 +46,6 @@ class TestSyncTeam:
         sample_team: dict,
     ) -> None:
         """Test that sync_team updates existing team (upsert)."""
-        # Must sync venue first since teams table has FK to venues
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-        sync_venue(mock_client, temp_db, 22)
-
         # First insert
         responses.add(
             responses.GET,
@@ -103,15 +84,6 @@ class TestSyncTeam:
         sample_team: dict,
     ) -> None:
         """Test that synced team includes write metadata."""
-        # Must sync venue first since teams table has FK to venues
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json={"venues": [{"id": 22, "name": "Dodger Stadium"}]},
-            status=200,
-        )
-        sync_venue(mock_client, temp_db, 22)
-
         responses.add(
             responses.GET,
             f"{BASE_URL}v1/teams/119",
@@ -129,46 +101,6 @@ class TestSyncTeam:
         assert row["_written_at"] is not None
         assert row["_git_hash"] is not None
         assert row["_version"] is not None
-
-
-class TestSyncVenue:
-    """Tests for sync_venue function."""
-
-    @responses.activate
-    def test_inserts_venue(
-        self,
-        temp_db: sqlite3.Connection,
-        mock_client: MLBStatsClient,
-    ) -> None:
-        """Test that sync_venue inserts venue record."""
-        venue_response = {
-            "venues": [
-                {
-                    "id": 22,
-                    "name": "Dodger Stadium",
-                    "location": {
-                        "city": "Los Angeles",
-                        "state": "California",
-                    },
-                }
-            ]
-        }
-
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/venues/22",
-            json=venue_response,
-            status=200,
-        )
-
-        sync_venue(mock_client, temp_db, 22)
-
-        cursor = temp_db.execute("SELECT name, city FROM venues WHERE id = 22")
-        row = cursor.fetchone()
-
-        assert row is not None
-        assert row["name"] == "Dodger Stadium"
-        assert row["city"] == "Los Angeles"
 
 
 class TestFetchSchedule:
@@ -220,12 +152,11 @@ class TestSyncGame:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
     ) -> None:
-        """Test that sync_game creates game with team/venue references.
+        """Test that sync_game creates game with team references.
 
-        Teams and venues are now extracted from the game feed itself,
-        eliminating separate API calls.
+        Teams are extracted from the game feed itself, eliminating separate API calls.
         """
-        # Mock game feed (contains teams, venues, and players)
+        # Mock game feed (contains teams and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -245,11 +176,6 @@ class TestSyncGame:
         cursor = temp_db.execute("SELECT COUNT(*) FROM teams")
         assert cursor.fetchone()[0] == 2
 
-        # Verify venues inserted as side effect (game venue + team home venues)
-        # Game venue (Dodger Stadium id=22) + team home venues (Oracle Park id=2395)
-        cursor = temp_db.execute("SELECT COUNT(*) FROM venues")
-        assert cursor.fetchone()[0] == 2
-
     @responses.activate
     def test_game_includes_write_metadata(
         self,
@@ -258,7 +184,7 @@ class TestSyncGame:
         sample_game_feed: dict,
     ) -> None:
         """Test that synced game includes write metadata."""
-        # Mock game feed (contains teams, venues, and players)
+        # Mock game feed (contains teams and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -276,104 +202,6 @@ class TestSyncGame:
         assert row["_written_at"] is not None
         assert row["_git_hash"] is not None
         assert row["_version"] is not None
-
-
-class TestSyncGamesForDateRange:
-    """Tests for sync_games_for_date_range function."""
-
-    @responses.activate
-    def test_syncs_multiple_games(
-        self,
-        temp_db: sqlite3.Connection,
-        mock_client: MLBStatsClient,
-        sample_schedule: dict,
-        sample_game_feed: dict,
-    ) -> None:
-        """Test syncing multiple games from schedule."""
-        # Mock schedule
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/schedule",
-            json=sample_schedule,
-            status=200,
-        )
-
-        # Mock game feed (contains teams, venues, and players)
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1.1/game/745927/feed/live",
-            json=sample_game_feed,
-            status=200,
-        )
-
-        success, failures = sync_games_for_date_range(
-            mock_client, temp_db, "2024-07-01", "2024-07-01"
-        )
-
-        assert success == 1
-        assert failures == 0
-
-    @responses.activate
-    def test_empty_date_range(
-        self,
-        temp_db: sqlite3.Connection,
-        mock_client: MLBStatsClient,
-    ) -> None:
-        """Test sync with no games in date range."""
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/schedule",
-            json={"dates": []},
-            status=200,
-        )
-
-        success, failures = sync_games_for_date_range(
-            mock_client, temp_db, "2024-12-25", "2024-12-25"
-        )
-
-        assert success == 0
-        assert failures == 0
-
-    @responses.activate
-    def test_progress_callback_called(
-        self,
-        temp_db: sqlite3.Connection,
-        mock_client: MLBStatsClient,
-        sample_schedule: dict,
-        sample_game_feed: dict,
-    ) -> None:
-        """Test that progress callback is invoked."""
-        # Mock schedule
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1/schedule",
-            json=sample_schedule,
-            status=200,
-        )
-
-        # Mock game feed (contains teams, venues, and players)
-        responses.add(
-            responses.GET,
-            f"{BASE_URL}v1.1/game/745927/feed/live",
-            json=sample_game_feed,
-            status=200,
-        )
-
-        progress_calls = []
-
-        def track_progress(current: int, total: int) -> None:
-            progress_calls.append((current, total))
-
-        sync_games_for_date_range(
-            mock_client,
-            temp_db,
-            "2024-07-01",
-            "2024-07-01",
-            progress_callback=track_progress,
-        )
-
-        assert len(progress_calls) == 1
-        assert progress_calls[0] == (1, 1)
 
 
 class TestIdempotentSync:

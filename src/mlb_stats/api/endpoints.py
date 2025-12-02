@@ -12,7 +12,6 @@ PLAYER = "v1/people/{person_id}"
 PLAYERS_BATCH = "v1/people"
 TEAM = "v1/teams/{team_id}"
 TEAMS = "v1/teams"
-VENUE = "v1/venues/{venue_id}"
 
 # Cacheable endpoint types - only game data, never reference data
 CACHEABLE_TYPES = frozenset({"game_feed", "boxscore", "play_by_play"})

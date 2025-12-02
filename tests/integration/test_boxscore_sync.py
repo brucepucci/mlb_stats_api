@@ -21,7 +21,7 @@ class TestSyncBoxscore:
         sample_boxscore: dict,
     ) -> None:
         """Test that sync_boxscore creates batting/pitching records."""
-        # Mock game feed (has teams, venue, and players)
+        # Mock game feed (has teams and players)
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
@@ -64,11 +64,6 @@ class TestSyncBoxscore:
         cursor = temp_db.execute("SELECT COUNT(*) FROM teams")
         team_count = cursor.fetchone()[0]
         assert team_count == 2
-
-        # Verify venues synced (from game feed - game venue + team home venues)
-        cursor = temp_db.execute("SELECT COUNT(*) FROM venues")
-        venue_count = cursor.fetchone()[0]
-        assert venue_count == 2
 
     @responses.activate
     def test_empty_boxscore_returns_false(
@@ -123,7 +118,7 @@ class TestSyncBoxscore:
 
         cursor = temp_db.execute(
             """
-            SELECT player_id, team_id, battingOrder, hits, homeRuns, rbi, avg
+            SELECT player_id, team_id, battingOrder, hits, homeRuns, rbi, avg, obp, slg, ops
             FROM game_batting
             WHERE gamePk = 745927
             """
@@ -136,7 +131,11 @@ class TestSyncBoxscore:
         assert row["hits"] == 2
         assert row["homeRuns"] == 1
         assert row["rbi"] == 2
-        assert row["avg"] == ".500"
+        # Calculated rate stats: 2 hits / 4 AB = 0.500, totalBases 5 / 4 AB = 1.250
+        assert row["avg"] == "0.500"
+        assert row["obp"] == "0.500"
+        assert row["slg"] == "1.250"
+        assert row["ops"] == "1.750"
 
     @responses.activate
     def test_pitching_record_has_correct_data(
@@ -165,7 +164,7 @@ class TestSyncBoxscore:
 
         cursor = temp_db.execute(
             """
-            SELECT player_id, team_id, isStartingPitcher, strikeOuts, era, note
+            SELECT player_id, team_id, isStartingPitcher, strikeOuts, era, whip, note
             FROM game_pitching
             WHERE gamePk = 745927
             """
@@ -176,8 +175,10 @@ class TestSyncBoxscore:
         assert row["team_id"] == 119  # Home team
         assert row["isStartingPitcher"] == 1
         assert row["strikeOuts"] == 8
+        # Calculated: 2 ER / 6.0 IP * 9 = 3.00, (5 H + 2 BB) / 6.0 IP = 1.17
         assert row["era"] == "3.00"
-        assert row["note"] == "W"
+        assert row["whip"] == "1.17"
+        assert row["note"] == "(W, 5-2)"
 
     @responses.activate
     def test_boxscore_includes_write_metadata(

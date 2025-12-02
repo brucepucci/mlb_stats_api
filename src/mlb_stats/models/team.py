@@ -29,7 +29,6 @@ def _transform_team_data(team: dict, fetched_at: str) -> dict:
         "league_name": team.get("league", {}).get("name"),
         "division_id": team.get("division", {}).get("id"),
         "division_name": team.get("division", {}).get("name"),
-        "venue_id": team.get("venue", {}).get("id"),
         "active": 1 if team.get("active") else 0,
         "_fetched_at": fetched_at,
     }

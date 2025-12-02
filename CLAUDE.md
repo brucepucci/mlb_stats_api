@@ -4,7 +4,7 @@ Project context for AI assistants working on the MLB Stats API data collection p
 
 ## Project Overview
 
-A Python CLI application that collects MLB game data from the MLB Stats API and stores it in SQLite. The tool fetches game schedules, box scores, pitch-by-pitch data with Statcast metrics, and reference data (teams, venues, players).
+A Python CLI application that collects MLB game data from the MLB Stats API and stores it in SQLite. The tool fetches game schedules, box scores, pitch-by-pitch data with Statcast metrics, and reference data (teams, players).
 
 **Full planning document:** `docs/PROJECT_PLAN.md`
 
@@ -28,7 +28,7 @@ A Python CLI application that collects MLB game data from the MLB Stats API and 
 
 ## Database Schema (11 Tables)
 
-**Reference tables:** `teams`, `venues`, `players`
+**Reference tables:** `teams`, `players`
 **Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`
 **Pitch-level tables:** `pitches`, `at_bats`, `batted_balls`
 **Operational:** `sync_log`, `_meta`
@@ -80,7 +80,6 @@ for player_id in boxscore_player_ids:
 | Schedule | No | Can change |
 | Players | **No** | Mutable fields |
 | Teams | **No** | Mutable fields |
-| Venues | **No** | Mutable fields |
 
 ## Implementation Phases
 
@@ -123,7 +122,6 @@ Base URL: `https://statsapi.mlb.com/api/`
 | `/v1/game/{gamePk}/playByPlay` | Pitch-by-pitch data |
 | `/v1/people/{personId}` | Player info |
 | `/v1/teams/{teamId}` | Team info |
-| `/v1/venues/{venueId}` | Venue info |
 
 ## Technical Stack
 
@@ -169,18 +167,14 @@ src/mlb_stats/
 │   └── queries.py         # Upsert helpers
 ├── models/
 │   ├── team.py            # transform_team()
-│   ├── venue.py           # transform_venue()
 │   ├── player.py          # transform_player()
 │   ├── game.py            # transform_game()
-│   ├── boxscore.py        # transform_batting(), transform_pitching()
-│   └── pitch.py           # transform_pitch(), transform_batted_ball()
+│   └── boxscore.py        # transform_batting(), transform_pitching()
 ├── collectors/
 │   ├── schedule.py
 │   ├── game.py
 │   ├── boxscore.py
-│   ├── play_by_play.py
 │   ├── team.py            # On-demand
-│   ├── venue.py           # On-demand
 │   └── player.py          # On-demand
 └── utils/
     ├── logging.py

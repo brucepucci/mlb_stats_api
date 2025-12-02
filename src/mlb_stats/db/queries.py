@@ -20,21 +20,6 @@ def upsert_team(conn: sqlite3.Connection, row: dict) -> None:
     _upsert(conn, "teams", row)
 
 
-def upsert_venue(conn: sqlite3.Connection, row: dict) -> None:
-    """Insert or replace venue record with write metadata.
-
-    Parameters
-    ----------
-    conn : sqlite3.Connection
-        Database connection
-    row : dict
-        Venue row data
-    """
-    row = row.copy()
-    row.update(get_write_metadata())
-    _upsert(conn, "venues", row)
-
-
 def upsert_game(conn: sqlite3.Connection, row: dict) -> None:
     """Insert or replace game record with write metadata.
 

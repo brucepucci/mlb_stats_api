@@ -22,7 +22,6 @@ class TestTransformTeam:
         assert result["league_name"] == "National League"
         assert result["division_id"] == 203
         assert result["division_name"] == "National League West"
-        assert result["venue_id"] == 22
         assert result["active"] == 1
         assert result["_fetched_at"] == "2024-07-01T00:00:00Z"
 
@@ -58,7 +57,6 @@ class TestTransformTeam:
         assert result["name"] == "Test Team"
         assert result["active"] == 0
         assert result["league_id"] is None
-        assert result["venue_id"] is None
 
     def test_empty_response(self) -> None:
         """Test transformation with empty teams array."""

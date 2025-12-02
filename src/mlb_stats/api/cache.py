@@ -1,7 +1,7 @@
 """File-based JSON cache for MLB Stats API responses.
 
 Only caches immutable game data (game feed, boxscore, play-by-play).
-Reference data (teams, venues, players, schedule) is NEVER cached.
+Reference data (teams, players, schedule) is NEVER cached.
 """
 
 import json

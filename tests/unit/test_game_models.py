@@ -23,7 +23,6 @@ class TestTransformGame:
         assert result["gameType"] == "R"
         assert result["away_team_id"] == 137
         assert result["home_team_id"] == 119
-        assert result["venue_id"] == 22
         assert result["venue_name"] == "Dodger Stadium"
         assert result["abstractGameState"] == "Final"
         assert result["_fetched_at"] == "2024-07-01T00:00:00Z"

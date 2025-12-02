@@ -87,7 +87,7 @@ def sample_game_feed() -> dict:
     Returns
     -------
     dict
-        Game feed structure with teams, venue, and players
+        Game feed structure with teams and players
     """
     return {
         "gamePk": 745927,
@@ -314,12 +314,11 @@ def sample_boxscore() -> dict:
                                 "homeRuns": 1,
                                 "strikeOuts": 1,
                                 "baseOnBalls": 0,
+                                "hitByPitch": 0,
                                 "atBats": 4,
                                 "rbi": 2,
-                                "avg": ".500",
-                                "obp": ".500",
-                                "slg": "1.250",
-                                "ops": "1.750",
+                                "totalBases": 5,
+                                "sacFlies": 0,
                             }
                         },
                         "gameStatus": {"isCurrentBatter": False},
@@ -350,11 +349,9 @@ def sample_boxscore() -> dict:
                                 "earnedRuns": 2,
                                 "runs": 3,
                                 "homeRuns": 1,
-                                "era": "3.00",
-                                "whip": "1.17",
+                                "note": "(W, 5-2)",
                             }
                         },
-                        "seasonStats": {"pitching": {"note": "W"}},
                         "gameStatus": {"isStartingPitcher": True},
                     }
                 },

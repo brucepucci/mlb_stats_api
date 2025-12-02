@@ -67,7 +67,7 @@ def init_db(ctx: click.Context) -> None:
     """Initialize the database with all tables.
 
     Creates the SQLite database file and all required tables
-    (teams, venues, players, games, pitches, etc.).
+    (teams, players, games, pitches, etc.).
     """
     db_path = ctx.obj["db_path"]
     conn = do_init_db(db_path)
@@ -102,7 +102,7 @@ def sync(
 ) -> None:
     """Sync all game data from MLB Stats API.
 
-    Fetches games, teams, venues, players, and batting/pitching stats.
+    Fetches games, teams, players, and batting/pitching stats.
     Can sync a single game by gamePk, a date range, or an entire season.
 
     Examples:

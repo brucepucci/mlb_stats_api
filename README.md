@@ -1,6 +1,6 @@
 # MLB Stats Collector
 
-A Python CLI application that collects MLB game data from the MLB Stats API and stores it in SQLite. The tool fetches game schedules, box scores, pitch-by-pitch data with Statcast metrics, and reference data (teams, venues, players).
+A Python CLI application that collects MLB game data from the MLB Stats API and stores it in SQLite. The tool fetches game schedules, box scores, pitch-by-pitch data with Statcast metrics, and reference data (teams, players).
 
 ## Features
 
@@ -46,7 +46,7 @@ uv run mlb-stats init-db
 
 ### Syncing Data
 
-Fetch all game data from the MLB Stats API and store in the database. This includes games, teams, venues, players, and batting/pitching stats.
+Fetch all game data from the MLB Stats API and store in the database. This includes games, teams, players, and batting/pitching stats.
 
 ```bash
 # Sync a specific game by gamePk
@@ -166,7 +166,6 @@ src/mlb_stats/
 │   └── queries.py       # Database upsert/query helpers
 ├── models/
 │   ├── team.py          # Team transformer
-│   ├── venue.py         # Venue transformer
 │   ├── game.py          # Game transformer
 │   ├── player.py        # Player transformer
 │   └── boxscore.py      # Batting/pitching transformers
@@ -174,7 +173,6 @@ src/mlb_stats/
 │   ├── schedule.py      # Schedule fetcher
 │   ├── game.py          # Game sync orchestrator
 │   ├── team.py          # Team sync (on-demand)
-│   ├── venue.py         # Venue sync (on-demand)
 │   ├── player.py        # Player sync (always fresh)
 │   └── boxscore.py      # Boxscore sync orchestrator
 └── utils/
@@ -187,7 +185,7 @@ src/mlb_stats/
 
 The database contains 11 tables:
 
-**Reference tables:** `teams`, `venues`, `players`
+**Reference tables:** `teams`, `players`
 
 **Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`
 
