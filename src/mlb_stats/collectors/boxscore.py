@@ -194,6 +194,7 @@ def sync_boxscores_for_date_range(
     start_date: str,
     end_date: str,
     progress_callback: Callable[[int, int], None] | None = None,
+    force_refresh: bool = False,
 ) -> tuple[int, int]:
     """Sync boxscores for all games in date range.
 
@@ -209,6 +210,8 @@ def sync_boxscores_for_date_range(
         End date (YYYY-MM-DD)
     progress_callback : callable, optional
         Called with (current, total) for progress updates
+    force_refresh : bool
+        If True, always fetch schedule from API instead of using database
 
     Returns
     -------
@@ -217,13 +220,16 @@ def sync_boxscores_for_date_range(
 
     Notes
     -----
-    Gets gamePks from database first. If none found, fetches from
-    schedule API (so games don't need to be synced first).
+    Gets gamePks from database first (unless force_refresh=True).
+    If none found, fetches from schedule API.
     """
-    # Try to get gamePks from database first
-    game_pks = get_game_pks_for_date_range(conn, start_date, end_date)
+    game_pks = []
 
-    # If no games in database, fetch from schedule API
+    # Try to get gamePks from database first (unless force_refresh)
+    if not force_refresh:
+        game_pks = get_game_pks_for_date_range(conn, start_date, end_date)
+
+    # If no games in database (or force_refresh), fetch from schedule API
     if not game_pks:
         logger.info(
             "No games in database for %s to %s, fetching from schedule API",
