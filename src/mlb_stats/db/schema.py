@@ -239,14 +239,9 @@ CREATE TABLE IF NOT EXISTS game_batting (
     catchersInterference INTEGER,
     pickoffs INTEGER,
 
-    -- Calculated stats from API (as strings to preserve formatting)
-    avg TEXT,
-    obp TEXT,
-    slg TEXT,
-    ops TEXT,
-
-    -- Game context
+    -- Rate stats from API (sparse - only provided in some contexts)
     atBatsPerHomeRun TEXT,
+    stolenBasePercentage TEXT,
 
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
@@ -330,10 +325,6 @@ CREATE TABLE IF NOT EXISTS game_pitching (
     sacBunts INTEGER,
     sacFlies INTEGER,
     passedBall INTEGER,
-
-    -- Calculated stats from API
-    era TEXT,
-    whip TEXT,
 
     -- Game result attribution
     note TEXT,                           -- 'W', 'L', 'S', 'H', 'BS', etc.

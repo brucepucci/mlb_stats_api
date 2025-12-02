@@ -118,7 +118,7 @@ class TestSyncBoxscore:
 
         cursor = temp_db.execute(
             """
-            SELECT player_id, team_id, battingOrder, hits, homeRuns, rbi, avg, obp, slg, ops
+            SELECT player_id, team_id, battingOrder, hits, homeRuns, rbi
             FROM game_batting
             WHERE gamePk = 745927
             """
@@ -131,11 +131,6 @@ class TestSyncBoxscore:
         assert row["hits"] == 2
         assert row["homeRuns"] == 1
         assert row["rbi"] == 2
-        # Calculated rate stats: 2 hits / 4 AB = 0.500, totalBases 5 / 4 AB = 1.250
-        assert row["avg"] == "0.500"
-        assert row["obp"] == "0.500"
-        assert row["slg"] == "1.250"
-        assert row["ops"] == "1.750"
 
     @responses.activate
     def test_pitching_record_has_correct_data(
@@ -164,7 +159,7 @@ class TestSyncBoxscore:
 
         cursor = temp_db.execute(
             """
-            SELECT player_id, team_id, isStartingPitcher, strikeOuts, era, whip, note
+            SELECT player_id, team_id, isStartingPitcher, strikeOuts, note
             FROM game_pitching
             WHERE gamePk = 745927
             """
@@ -175,9 +170,6 @@ class TestSyncBoxscore:
         assert row["team_id"] == 119  # Home team
         assert row["isStartingPitcher"] == 1
         assert row["strikeOuts"] == 8
-        # Calculated: 2 ER / 6.0 IP * 9 = 3.00, (5 H + 2 BB) / 6.0 IP = 1.17
-        assert row["era"] == "3.00"
-        assert row["whip"] == "1.17"
         assert row["note"] == "(W, 5-2)"
 
     @responses.activate

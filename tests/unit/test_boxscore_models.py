@@ -42,17 +42,6 @@ class TestTransformBatting:
         assert row["position_name"] == "Designated Hitter"
         assert row["position_abbreviation"] == "DH"
 
-    def test_extracts_calculated_stats(self, sample_boxscore: dict) -> None:
-        """Test calculation of rate stats from counting stats."""
-        rows = transform_batting(sample_boxscore, 745927, "2024-07-01T00:00:00Z")
-
-        row = rows[0]
-        # Calculated from fixture: 2 hits / 4 AB = 0.500, 5 TB / 4 AB = 1.250
-        assert row["avg"] == "0.500"
-        assert row["obp"] == "0.500"
-        assert row["slg"] == "1.250"
-        assert row["ops"] == "1.750"
-
     def test_empty_boxscore(self) -> None:
         """Test handling of empty boxscore."""
         boxscore = {"teams": {"away": {"players": {}}, "home": {"players": {}}}}
@@ -139,14 +128,6 @@ class TestTransformPitching:
 
         row = rows[0]
         assert row["note"] == "(W, 5-2)"
-
-    def test_extracts_calculated_stats(self, sample_boxscore: dict) -> None:
-        """Test extraction of calculated pitching stats."""
-        rows = transform_pitching(sample_boxscore, 745927, "2024-07-01T00:00:00Z")
-
-        row = rows[0]
-        assert row["era"] == "3.00"
-        assert row["whip"] == "1.17"
 
     def test_empty_boxscore(self) -> None:
         """Test handling of empty boxscore."""

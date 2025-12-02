@@ -671,16 +671,11 @@ CREATE TABLE game_batting (
     sacFlies INTEGER,
     catchersInterference INTEGER,
     pickoffs INTEGER,
-    
-    -- Calculated stats from API (as strings to preserve formatting)
-    avg TEXT,
-    obp TEXT,
-    slg TEXT,
-    ops TEXT,
-    
-    -- Game context
+
+    -- Rate stats from API (sparse - only provided in some contexts)
     atBatsPerHomeRun TEXT,
-    
+    stolenBasePercentage TEXT,
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
     
@@ -764,22 +759,18 @@ CREATE TABLE game_pitching (
     sacBunts INTEGER,
     sacFlies INTEGER,
     passedBall INTEGER,
-    
-    -- Calculated stats from API
-    era TEXT,
-    whip TEXT,
-    
+
     -- Game result attribution
     note TEXT,                           -- 'W', 'L', 'S', 'H', 'BS', etc.
-    
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
-    
+
     -- Write metadata (provenance)
     _written_at TEXT NOT NULL,
     _git_hash TEXT NOT NULL,
     _version TEXT NOT NULL,
-    
+
     FOREIGN KEY (gamePk) REFERENCES games(gamePk),
     FOREIGN KEY (player_id) REFERENCES players(id),
     FOREIGN KEY (team_id) REFERENCES teams(id),
