@@ -92,6 +92,17 @@ def init_db(ctx: click.Context) -> None:
     type=int,
     help="Season year (e.g., 2024). Alternative to date range.",
 )
+@click.option(
+    "--all",
+    "sync_all",
+    is_flag=True,
+    help="Sync all data from 2015 to today (Statcast era).",
+)
+@click.option(
+    "--force-refresh",
+    is_flag=True,
+    help="Always fetch schedule from API, ignoring games already in database.",
+)
 @click.pass_context
 def sync(
     ctx: click.Context,
@@ -99,6 +110,8 @@ def sync(
     start_date: str | None,
     end_date: str | None,
     season: int | None,
+    sync_all: bool,
+    force_refresh: bool,
 ) -> None:
     """Sync all game data from MLB Stats API.
 
@@ -112,27 +125,38 @@ def sync(
         mlb-stats sync --start-date 2024-07-01 --end-date 2024-07-07
 
         mlb-stats sync --season 2024
+
+        mlb-stats sync --all --force-refresh
     """
+    from datetime import date
+
     from mlb_stats.api.client import MLBStatsClient
     from mlb_stats.collectors.boxscore import (
         sync_boxscore,
         sync_boxscores_for_date_range,
     )
-    from mlb_stats.utils.dates import parse_date, season_dates
+    from mlb_stats.utils.dates import format_date, parse_date, season_dates
 
     # Validate options
     if game_pk is not None:
+        if start_date or end_date or season or sync_all:
+            raise click.UsageError(
+                "Cannot use gamePk with --start-date/--end-date/--season/--all"
+            )
+    elif sync_all:
         if start_date or end_date or season:
             raise click.UsageError(
-                "Cannot use gamePk with --start-date/--end-date/--season"
+                "Cannot use --all with --start-date/--end-date/--season"
             )
+        start_date = "2015-02-15"
+        end_date = format_date(date.today())
     elif season:
         if start_date or end_date:
             raise click.UsageError("Cannot use --season with --start-date/--end-date")
         start_date, end_date = season_dates(season)
     elif not (start_date and end_date):
         raise click.UsageError(
-            "Must provide gamePk, --season, or both --start-date and --end-date"
+            "Must provide gamePk, --season, --all, or both --start-date and --end-date"
         )
 
     # Validate date format if provided
@@ -170,7 +194,8 @@ def sync(
             click.echo(f"Syncing games from {start_date} to {end_date}")
 
             success, failures = sync_boxscores_for_date_range(
-                client, conn, start_date, end_date, progress_callback=progress
+                client, conn, start_date, end_date, progress_callback=progress,
+                force_refresh=force_refresh,
             )
 
             # Clear progress line and print summary
