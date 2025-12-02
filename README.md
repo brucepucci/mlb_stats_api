@@ -57,7 +57,18 @@ uv run mlb-stats sync --start-date 2024-07-01 --end-date 2024-07-07
 
 # Sync all games for a season
 uv run mlb-stats sync --season 2024
+
+# Sync all data from 2015 to today (Statcast era)
+uv run mlb-stats sync --all
+
+# Force refresh from API (ignore games already in database)
+uv run mlb-stats sync --season 2024 --force-refresh
+
+# Full historical sync with force refresh
+uv run mlb-stats sync --all --force-refresh
 ```
+
+**Note:** The `--force-refresh` flag is useful when you have partial data in the database and want to fetch the complete schedule from the API. Without it, the sync will only process games already in the database for that date range.
 
 ### Global Options
 
@@ -88,7 +99,10 @@ uv run mlb-stats -v sync --start-date 2024-06-15 --end-date 2024-06-15
 uv run mlb-stats sync --start-date 2024-03-28 --end-date 2024-03-28
 
 # Sync the entire 2023 season (this will take a while)
-uv run mlb-stats sync --season 2023
+uv run mlb-stats sync --season 2023 --force-refresh
+
+# Sync all Statcast-era data (2015-present, ~30,000+ games)
+uv run mlb-stats sync --all --force-refresh
 ```
 
 ### Querying the Database

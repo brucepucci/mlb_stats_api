@@ -135,7 +135,7 @@ def sync(
         sync_boxscore,
         sync_boxscores_for_date_range,
     )
-    from mlb_stats.utils.dates import format_date, parse_date, season_dates
+    from mlb_stats.utils.dates import parse_date, season_dates
 
     # Validate options
     if game_pk is not None:
@@ -148,8 +148,7 @@ def sync(
             raise click.UsageError(
                 "Cannot use --all with --start-date/--end-date/--season"
             )
-        start_date = "2015-02-15"
-        end_date = format_date(date.today())
+        # Dates set per-year in the sync loop (API has per-request limits)
     elif season:
         if start_date or end_date:
             raise click.UsageError("Cannot use --season with --start-date/--end-date")
@@ -186,6 +185,41 @@ def sync(
             else:
                 click.echo("Sync failed (game may not have started)")
                 ctx.exit(1)
+        elif sync_all:
+            # Sync all years (API has per-request limit, must iterate by season)
+            current_year = date.today().year
+            total_success = 0
+            total_failures = 0
+
+            for year in range(2015, current_year + 1):
+                season_start, season_end = season_dates(year)
+                click.echo(f"\n=== Syncing {year} season ===")
+
+                def progress(current: int, total: int) -> None:
+                    click.echo(
+                        f"\r[{year}] Syncing game {current}/{total}...", nl=False
+                    )
+
+                success, failures = sync_boxscores_for_date_range(
+                    client,
+                    conn,
+                    season_start,
+                    season_end,
+                    progress_callback=progress,
+                    force_refresh=force_refresh,
+                )
+                click.echo()
+                click.echo(f"[{year}] {success} games synced, {failures} failures")
+                total_success += success
+                total_failures += failures
+
+            click.echo(f"\n=== All seasons complete ===")
+            click.echo(
+                f"Total: {total_success} games synced, {total_failures} failures"
+            )
+
+            if total_failures > 0:
+                ctx.exit(1)
         else:
             # Date range sync
             def progress(current: int, total: int) -> None:
@@ -194,7 +228,11 @@ def sync(
             click.echo(f"Syncing games from {start_date} to {end_date}")
 
             success, failures = sync_boxscores_for_date_range(
-                client, conn, start_date, end_date, progress_callback=progress,
+                client,
+                conn,
+                start_date,
+                end_date,
+                progress_callback=progress,
                 force_refresh=force_refresh,
             )
 

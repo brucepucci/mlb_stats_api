@@ -424,3 +424,81 @@ class TestSyncBoxscoresForDateRange:
 
         assert len(progress_calls) == 1
         assert progress_calls[0] == (1, 1)
+
+    @responses.activate
+    def test_force_refresh_always_calls_schedule_api(
+        self,
+        temp_db: sqlite3.Connection,
+        mock_client: MLBStatsClient,
+        sample_schedule: dict,
+        sample_game_feed: dict,
+        sample_boxscore: dict,
+    ) -> None:
+        """Test that force_refresh=True always fetches from schedule API."""
+        # First sync without force_refresh to populate DB
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/schedule",
+            json=sample_schedule,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1.1/game/745927/feed/live",
+            json=sample_game_feed,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/game/745927/boxscore",
+            json=sample_boxscore,
+            status=200,
+        )
+
+        sync_boxscores_for_date_range(mock_client, temp_db, "2024-07-01", "2024-07-01")
+
+        # Now DB has game 745927. Without force_refresh, schedule API wouldn't be called.
+        # With force_refresh=True, schedule API should be called again.
+
+        # Add mocks for second sync
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/schedule",
+            json=sample_schedule,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1.1/game/745927/feed/live",
+            json=sample_game_feed,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/game/745927/boxscore",
+            json=sample_boxscore,
+            status=200,
+        )
+
+        # Count schedule calls before
+        schedule_calls_before = len(
+            [c for c in responses.calls if "schedule" in str(c.request.url)]
+        )
+
+        # Sync with force_refresh
+        success, failures = sync_boxscores_for_date_range(
+            mock_client,
+            temp_db,
+            "2024-07-01",
+            "2024-07-01",
+            force_refresh=True,
+        )
+
+        assert success == 1
+        assert failures == 0
+
+        # Verify schedule API was called again (force_refresh bypassed DB check)
+        schedule_calls_after = len(
+            [c for c in responses.calls if "schedule" in str(c.request.url)]
+        )
+        assert schedule_calls_after == schedule_calls_before + 1
