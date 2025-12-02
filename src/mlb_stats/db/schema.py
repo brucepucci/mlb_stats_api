@@ -32,35 +32,7 @@ CREATE TABLE IF NOT EXISTS teams (
     league_name TEXT,
     division_id INTEGER,
     division_name TEXT,
-    venue_id INTEGER,
     active INTEGER,                      -- 1 or 0
-
-    -- API fetch metadata
-    _fetched_at TEXT NOT NULL,
-
-    -- Write metadata (provenance)
-    _written_at TEXT NOT NULL,
-    _git_hash TEXT NOT NULL,
-    _version TEXT NOT NULL,
-
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
-);
-"""
-
-CREATE_VENUES_TABLE = """
-CREATE TABLE IF NOT EXISTS venues (
-    id INTEGER PRIMARY KEY,              -- MLB venueId
-    name TEXT NOT NULL,
-    city TEXT,
-    state TEXT,
-    stateAbbrev TEXT,
-    country TEXT,
-
-    -- Location data (may be null)
-    latitude REAL,
-    longitude REAL,
-    elevation REAL,
-    timezone TEXT,
 
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
@@ -71,6 +43,7 @@ CREATE TABLE IF NOT EXISTS venues (
     _version TEXT NOT NULL
 );
 """
+
 
 CREATE_PLAYERS_TABLE = """
 CREATE TABLE IF NOT EXISTS players (
@@ -150,9 +123,8 @@ CREATE TABLE IF NOT EXISTS games (
     detailedState TEXT,                  -- 'Final', 'In Progress', etc.
     statusCode TEXT,
 
-    -- Venue
-    venue_id INTEGER,
-    venue_name TEXT,                     -- Denormalized for convenience
+    -- Venue (denormalized, no venues table)
+    venue_name TEXT,
 
     -- Game details
     dayNight TEXT,                       -- 'day', 'night'
@@ -193,8 +165,7 @@ CREATE TABLE IF NOT EXISTS games (
     _version TEXT NOT NULL,
 
     FOREIGN KEY (away_team_id) REFERENCES teams(id),
-    FOREIGN KEY (home_team_id) REFERENCES teams(id),
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
+    FOREIGN KEY (home_team_id) REFERENCES teams(id)
 );
 """
 
@@ -268,14 +239,9 @@ CREATE TABLE IF NOT EXISTS game_batting (
     catchersInterference INTEGER,
     pickoffs INTEGER,
 
-    -- Calculated stats from API (as strings to preserve formatting)
-    avg TEXT,
-    obp TEXT,
-    slg TEXT,
-    ops TEXT,
-
-    -- Game context
+    -- Rate stats from API (sparse - only provided in some contexts)
     atBatsPerHomeRun TEXT,
+    stolenBasePercentage TEXT,
 
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
@@ -359,10 +325,6 @@ CREATE TABLE IF NOT EXISTS game_pitching (
     sacBunts INTEGER,
     sacFlies INTEGER,
     passedBall INTEGER,
-
-    -- Calculated stats from API
-    era TEXT,
-    whip TEXT,
 
     -- Game result attribution
     note TEXT,                           -- 'W', 'L', 'S', 'H', 'BS', etc.
@@ -685,44 +647,41 @@ def create_tables(conn: sqlite3.Connection) -> None:
     # 1. _meta (no dependencies)
     cursor.execute(CREATE_META_TABLE)
 
-    # 2. venues (no dependencies, teams references it)
-    cursor.execute(CREATE_VENUES_TABLE)
-
-    # 3. teams (depends on venues)
+    # 2. teams (no dependencies)
     cursor.execute(CREATE_TEAMS_TABLE)
 
-    # 4. players (depends on teams)
+    # 3. players (depends on teams)
     cursor.execute(CREATE_PLAYERS_TABLE)
 
-    # 5. games (depends on teams, venues)
+    # 4. games (depends on teams)
     cursor.execute(CREATE_GAMES_TABLE)
     cursor.executescript(CREATE_GAMES_INDICES)
 
-    # 6. game_officials (depends on games)
+    # 5. game_officials (depends on games)
     cursor.execute(CREATE_GAME_OFFICIALS_TABLE)
     cursor.executescript(CREATE_GAME_OFFICIALS_INDICES)
 
-    # 7. game_batting (depends on games, players, teams)
+    # 6. game_batting (depends on games, players, teams)
     cursor.execute(CREATE_GAME_BATTING_TABLE)
     cursor.executescript(CREATE_GAME_BATTING_INDICES)
 
-    # 8. game_pitching (depends on games, players, teams)
+    # 7. game_pitching (depends on games, players, teams)
     cursor.execute(CREATE_GAME_PITCHING_TABLE)
     cursor.executescript(CREATE_GAME_PITCHING_INDICES)
 
-    # 9. at_bats (depends on games, players)
+    # 8. at_bats (depends on games, players)
     cursor.execute(CREATE_AT_BATS_TABLE)
     cursor.executescript(CREATE_AT_BATS_INDICES)
 
-    # 10. pitches (depends on games, players)
+    # 9. pitches (depends on games, players)
     cursor.execute(CREATE_PITCHES_TABLE)
     cursor.executescript(CREATE_PITCHES_INDICES)
 
-    # 11. batted_balls (depends on games, players, pitches)
+    # 10. batted_balls (depends on games, players, pitches)
     cursor.execute(CREATE_BATTED_BALLS_TABLE)
     cursor.executescript(CREATE_BATTED_BALLS_INDICES)
 
-    # 12. sync_log (no dependencies)
+    # 11. sync_log (no dependencies)
     cursor.execute(CREATE_SYNC_LOG_TABLE)
     cursor.executescript(CREATE_SYNC_LOG_INDICES)
 
@@ -739,7 +698,6 @@ def get_table_names() -> list[str]:
     """
     return [
         "_meta",
-        "venues",
         "teams",
         "players",
         "games",

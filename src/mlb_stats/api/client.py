@@ -19,7 +19,6 @@ from mlb_stats.api.endpoints import (
     SCHEDULE,
     TEAM,
     TEAMS,
-    VENUE,
 )
 
 logger = logging.getLogger(__name__)
@@ -377,23 +376,3 @@ class MLBStatsClient:
             Teams data
         """
         return self.get(TEAMS, params={"sportId": sport_id})
-
-    def get_venue(self, venue_id: int) -> dict[str, Any]:
-        """Fetch venue data.
-
-        Venue data is NEVER cached to ensure freshness.
-
-        Parameters
-        ----------
-        venue_id : int
-            Venue ID
-
-        Returns
-        -------
-        dict
-            Venue data
-        """
-        endpoint = VENUE.format(venue_id=venue_id)
-        # hydrate=location includes city, state, coordinates, etc.
-        # hydrate=timezone includes timezone id (e.g., "America/New_York")
-        return self.get(endpoint, params={"hydrate": "location,timezone"})

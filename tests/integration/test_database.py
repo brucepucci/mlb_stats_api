@@ -64,25 +64,19 @@ class TestForeignKeyConstraints:
         # First create a team and game
         cursor.execute(
             """
-            INSERT INTO venues (id, name, _fetched_at, _written_at, _git_hash, _version)
-            VALUES (1, 'Test Stadium', '2024-01-01', '2024-01-01', 'abc', '1.0.0')
-            """
-        )
-        cursor.execute(
-            """
-            INSERT INTO teams (id, name, venue_id, _fetched_at, _written_at, _git_hash, _version)
-            VALUES (1, 'Test Team', 1, '2024-01-01', '2024-01-01', 'abc', '1.0.0')
+            INSERT INTO teams (id, name, _fetched_at, _written_at, _git_hash, _version)
+            VALUES (1, 'Test Team', '2024-01-01', '2024-01-01', 'abc', '1.0.0')
             """
         )
         cursor.execute(
             """
             INSERT INTO games (
                 gamePk, season, gameType, gameDate,
-                away_team_id, home_team_id, venue_id,
+                away_team_id, home_team_id,
                 _fetched_at, _written_at, _git_hash, _version
             ) VALUES (
                 1, 2024, 'R', '2024-07-01',
-                1, 1, 1,
+                1, 1,
                 '2024-01-01', '2024-01-01', 'abc', '1.0.0'
             )
             """
@@ -111,34 +105,34 @@ class TestUpsertBehavior:
         """Test that INSERT OR REPLACE updates existing rows."""
         cursor = temp_db.cursor()
 
-        # Insert a venue
+        # Insert a team
         cursor.execute(
             """
-            INSERT INTO venues (id, name, city, _fetched_at, _written_at, _git_hash, _version)
-            VALUES (1, 'Original Name', 'City', '2024-01-01', '2024-01-01', 'abc', '1.0.0')
+            INSERT INTO teams (id, name, _fetched_at, _written_at, _git_hash, _version)
+            VALUES (1, 'Original Name', '2024-01-01', '2024-01-01', 'abc', '1.0.0')
             """
         )
         temp_db.commit()
 
         # Verify original name
-        cursor.execute("SELECT name FROM venues WHERE id = 1")
+        cursor.execute("SELECT name FROM teams WHERE id = 1")
         assert cursor.fetchone()[0] == "Original Name"
 
         # Update with INSERT OR REPLACE
         cursor.execute(
             """
-            INSERT OR REPLACE INTO venues (id, name, city, _fetched_at, _written_at, _git_hash, _version)
-            VALUES (1, 'Updated Name', 'City', '2024-01-02', '2024-01-02', 'def', '1.0.0')
+            INSERT OR REPLACE INTO teams (id, name, _fetched_at, _written_at, _git_hash, _version)
+            VALUES (1, 'Updated Name', '2024-01-02', '2024-01-02', 'def', '1.0.0')
             """
         )
         temp_db.commit()
 
         # Verify updated name
-        cursor.execute("SELECT name FROM venues WHERE id = 1")
+        cursor.execute("SELECT name FROM teams WHERE id = 1")
         assert cursor.fetchone()[0] == "Updated Name"
 
         # Verify only one row exists
-        cursor.execute("SELECT COUNT(*) FROM venues WHERE id = 1")
+        cursor.execute("SELECT COUNT(*) FROM teams WHERE id = 1")
         assert cursor.fetchone()[0] == 1
 
 
@@ -149,13 +143,7 @@ class TestSchemaIntegrity:
         """Test that unique constraints are enforced."""
         cursor = temp_db.cursor()
 
-        # Insert a venue and team first
-        cursor.execute(
-            """
-            INSERT INTO venues (id, name, _fetched_at, _written_at, _git_hash, _version)
-            VALUES (1, 'Stadium', '2024-01-01', '2024-01-01', 'abc', '1.0.0')
-            """
-        )
+        # Insert a team first
         cursor.execute(
             """
             INSERT INTO teams (id, name, _fetched_at, _written_at, _git_hash, _version)

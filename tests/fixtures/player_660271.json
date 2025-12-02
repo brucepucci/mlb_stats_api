@@ -1,0 +1,61 @@
+{
+  "copyright": "Copyright 2024 MLB Advanced Media, L.P.",
+  "people": [
+    {
+      "id": 660271,
+      "fullName": "Shohei Ohtani",
+      "link": "/api/v1/people/660271",
+      "firstName": "Shohei",
+      "lastName": "Ohtani",
+      "primaryNumber": "17",
+      "birthDate": "1994-07-05",
+      "currentAge": 30,
+      "birthCity": "Oshu",
+      "birthStateProvince": "Iwate",
+      "birthCountry": "Japan",
+      "height": "6' 4\"",
+      "weight": 210,
+      "active": true,
+      "primaryPosition": {
+        "code": "Y",
+        "name": "Two-Way Player",
+        "type": "Two-Way Player",
+        "abbreviation": "TWP"
+      },
+      "useName": "Shohei",
+      "useLastName": "Ohtani",
+      "middleName": "",
+      "boxscoreName": "Ohtani, S",
+      "nickName": "Shotime",
+      "gender": "M",
+      "isPlayer": true,
+      "isVerified": true,
+      "draftYear": 2017,
+      "mlbDebutDate": "2018-03-29",
+      "lastPlayedDate": "2024-11-02",
+      "batSide": {
+        "code": "L",
+        "description": "Left"
+      },
+      "pitchHand": {
+        "code": "R",
+        "description": "Right"
+      },
+      "nameFirstLast": "Shohei Ohtani",
+      "nameSlug": "shohei-ohtani-660271",
+      "firstLastName": "Shohei Ohtani",
+      "lastFirstName": "Ohtani, Shohei",
+      "lastInitName": "Ohtani, S",
+      "initLastName": "S Ohtani",
+      "fullFMLName": "Shohei Ohtani",
+      "fullLFMName": "Ohtani, Shohei",
+      "strikeZoneTop": 3.575,
+      "strikeZoneBottom": 1.681,
+      "currentTeam": {
+        "id": 119,
+        "name": "Los Angeles Dodgers",
+        "link": "/api/v1/teams/119"
+      }
+    }
+  ]
+}

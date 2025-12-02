@@ -87,7 +87,7 @@ def sample_game_feed() -> dict:
     Returns
     -------
     dict
-        Minimal game feed structure
+        Game feed structure with teams and players
     """
     return {
         "gamePk": 745927,
@@ -96,10 +96,89 @@ def sample_game_feed() -> dict:
             "datetime": {"dateTime": "2024-07-02T02:10:00Z"},
             "status": {"abstractGameState": "Final", "detailedState": "Final"},
             "teams": {
-                "away": {"id": 137, "name": "San Francisco Giants"},
-                "home": {"id": 119, "name": "Los Angeles Dodgers"},
+                "away": {
+                    "id": 137,
+                    "name": "San Francisco Giants",
+                    "teamCode": "sfn",
+                    "abbreviation": "SF",
+                    "teamName": "Giants",
+                    "locationName": "San Francisco",
+                    "venue": {"id": 2395, "name": "Oracle Park"},
+                    "league": {"id": 104, "name": "National League"},
+                    "division": {"id": 203, "name": "NL West"},
+                    "active": True,
+                },
+                "home": {
+                    "id": 119,
+                    "name": "Los Angeles Dodgers",
+                    "teamCode": "lan",
+                    "abbreviation": "LAD",
+                    "teamName": "Dodgers",
+                    "locationName": "Los Angeles",
+                    "venue": {"id": 22, "name": "Dodger Stadium"},
+                    "league": {"id": 104, "name": "National League"},
+                    "division": {"id": 203, "name": "NL West"},
+                    "active": True,
+                },
             },
-            "venue": {"id": 22, "name": "Dodger Stadium"},
+            "venue": {
+                "id": 22,
+                "name": "Dodger Stadium",
+                "location": {
+                    "city": "Los Angeles",
+                    "state": "California",
+                    "stateAbbrev": "CA",
+                    "country": "USA",
+                    "defaultCoordinates": {"latitude": 34.0739, "longitude": -118.24},
+                },
+                "timeZone": {"id": "America/Los_Angeles"},
+            },
+            "players": {
+                "ID660271": {
+                    "id": 660271,
+                    "fullName": "Shohei Ohtani",
+                    "firstName": "Shohei",
+                    "lastName": "Ohtani",
+                    "primaryNumber": "17",
+                    "birthDate": "1994-07-05",
+                    "birthCity": "Oshu",
+                    "birthCountry": "Japan",
+                    "height": "6' 4\"",
+                    "weight": 210,
+                    "active": True,
+                    "primaryPosition": {
+                        "code": "Y",
+                        "name": "Two-Way Player",
+                        "type": "Two-Way Player",
+                        "abbreviation": "TWP",
+                    },
+                    "batSide": {"code": "L", "description": "Left"},
+                    "pitchHand": {"code": "R", "description": "Right"},
+                    "mlbDebutDate": "2018-03-29",
+                },
+                "ID543243": {
+                    "id": 543243,
+                    "fullName": "Test Pitcher",
+                    "firstName": "Test",
+                    "lastName": "Pitcher",
+                    "primaryNumber": "22",
+                    "birthDate": "1990-01-01",
+                    "birthCity": "Test City",
+                    "birthCountry": "USA",
+                    "height": "6' 2\"",
+                    "weight": 200,
+                    "active": True,
+                    "primaryPosition": {
+                        "code": "1",
+                        "name": "Pitcher",
+                        "type": "Pitcher",
+                        "abbreviation": "P",
+                    },
+                    "batSide": {"code": "R", "description": "Right"},
+                    "pitchHand": {"code": "R", "description": "Right"},
+                    "mlbDebutDate": "2015-04-01",
+                },
+            },
         },
         "liveData": {
             "boxscore": {
@@ -201,6 +280,85 @@ def sample_team() -> dict:
                 "venue": {"id": 22, "name": "Dodger Stadium"},
             }
         ]
+    }
+
+
+@pytest.fixture
+def sample_boxscore() -> dict:
+    """Sample boxscore response for testing.
+
+    Returns
+    -------
+    dict
+        Minimal boxscore structure with batting and pitching stats
+    """
+    return {
+        "teams": {
+            "away": {
+                "team": {"id": 137, "name": "San Francisco Giants"},
+                "players": {
+                    "ID660271": {
+                        "person": {"id": 660271, "fullName": "Shohei Ohtani"},
+                        "jerseyNumber": "17",
+                        "position": {
+                            "code": "10",
+                            "name": "Designated Hitter",
+                            "abbreviation": "DH",
+                        },
+                        "battingOrder": "100",
+                        "stats": {
+                            "batting": {
+                                "gamesPlayed": 1,
+                                "runs": 1,
+                                "hits": 2,
+                                "homeRuns": 1,
+                                "strikeOuts": 1,
+                                "baseOnBalls": 0,
+                                "hitByPitch": 0,
+                                "atBats": 4,
+                                "rbi": 2,
+                                "totalBases": 5,
+                                "sacFlies": 0,
+                            }
+                        },
+                        "gameStatus": {"isCurrentBatter": False},
+                    }
+                },
+                "pitchers": [543243],
+                "battingOrder": [660271],
+            },
+            "home": {
+                "team": {"id": 119, "name": "Los Angeles Dodgers"},
+                "players": {
+                    "ID543243": {
+                        "person": {"id": 543243, "fullName": "Test Pitcher"},
+                        "jerseyNumber": "22",
+                        "position": {
+                            "code": "1",
+                            "name": "Pitcher",
+                            "abbreviation": "P",
+                        },
+                        "stats": {
+                            "pitching": {
+                                "gamesPlayed": 1,
+                                "gamesStarted": 1,
+                                "inningsPitched": "6.0",
+                                "strikeOuts": 8,
+                                "baseOnBalls": 2,
+                                "hits": 5,
+                                "earnedRuns": 2,
+                                "runs": 3,
+                                "homeRuns": 1,
+                                "note": "(W, 5-2)",
+                            }
+                        },
+                        "gameStatus": {"isStartingPitcher": True},
+                    }
+                },
+                "pitchers": [543243],
+                "battingOrder": [],
+            },
+        }
     }
 
 

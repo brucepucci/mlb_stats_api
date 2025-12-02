@@ -1,6 +1,39 @@
 """Team data transformation functions."""
 
 
+def _transform_team_data(team: dict, fetched_at: str) -> dict:
+    """Transform raw team data to database row.
+
+    Parameters
+    ----------
+    team : dict
+        Raw team data (from API response or game feed)
+    fetched_at : str
+        ISO8601 timestamp when data was fetched
+
+    Returns
+    -------
+    dict
+        Row data matching teams table schema
+    """
+    return {
+        "id": team.get("id"),
+        "name": team.get("name"),
+        "teamCode": team.get("teamCode"),
+        "fileCode": team.get("fileCode"),
+        "abbreviation": team.get("abbreviation"),
+        "teamName": team.get("teamName"),
+        "locationName": team.get("locationName"),
+        "firstYearOfPlay": team.get("firstYearOfPlay"),
+        "league_id": team.get("league", {}).get("id"),
+        "league_name": team.get("league", {}).get("name"),
+        "division_id": team.get("division", {}).get("id"),
+        "division_name": team.get("division", {}).get("name"),
+        "active": 1 if team.get("active") else 0,
+        "_fetched_at": fetched_at,
+    }
+
+
 def transform_team(api_response: dict, fetched_at: str) -> dict:
     """Transform API team response to database row.
 
@@ -21,24 +54,24 @@ def transform_team(api_response: dict, fetched_at: str) -> dict:
     Expects response with 'teams' array containing single team.
     Flattens nested objects (league, division, venue) with underscore separator.
     """
-    # Extract team from response array
     teams = api_response.get("teams", [])
     team = teams[0] if teams else {}
+    return _transform_team_data(team, fetched_at)
 
-    return {
-        "id": team.get("id"),
-        "name": team.get("name"),
-        "teamCode": team.get("teamCode"),
-        "fileCode": team.get("fileCode"),
-        "abbreviation": team.get("abbreviation"),
-        "teamName": team.get("teamName"),
-        "locationName": team.get("locationName"),
-        "firstYearOfPlay": team.get("firstYearOfPlay"),
-        "league_id": team.get("league", {}).get("id"),
-        "league_name": team.get("league", {}).get("name"),
-        "division_id": team.get("division", {}).get("id"),
-        "division_name": team.get("division", {}).get("name"),
-        "venue_id": team.get("venue", {}).get("id"),
-        "active": 1 if team.get("active") else 0,
-        "_fetched_at": fetched_at,
-    }
+
+def transform_team_from_game_feed(team_data: dict, fetched_at: str) -> dict:
+    """Transform team data from game feed to database row.
+
+    Parameters
+    ----------
+    team_data : dict
+        Team data from gameData.teams.away or gameData.teams.home
+    fetched_at : str
+        ISO8601 timestamp when data was fetched
+
+    Returns
+    -------
+    dict
+        Row data matching teams table schema
+    """
+    return _transform_team_data(team_data, fetched_at)

@@ -350,12 +350,6 @@ GET /v1/teams/{teamId}
 }
 ```
 
-#### Venue Endpoint
-
-```
-GET /v1/venues/{venueId}
-```
-
 #### Meta Endpoint
 Retrieves lookup values for various types.
 
@@ -396,8 +390,7 @@ Cache raw JSON responses to avoid redundant API calls. **Only cache immutable ga
 | Play-by-play (Final) | Yes, indefinitely | Immutable once complete |
 | Schedule | No | Games can be postponed/rescheduled |
 | Players | **No** | `lastPlayedDate`, `currentTeam_id`, `active` change frequently |
-| Teams | **No** | Venue, division can change mid-season |
-| Venues | **No** | Capacity, name can change |
+| Teams | **No** | Division can change mid-season |
 
 Reference data API calls are lightweight. With 0.5s rate limiting, fetching 50 unique players in a day's games adds ~25 seconds. Worth it for accurate data.
 
@@ -465,46 +458,15 @@ CREATE TABLE teams (
     league_name TEXT,
     division_id INTEGER,
     division_name TEXT,
-    venue_id INTEGER,
     active INTEGER,                      -- 1 or 0
-    
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,            -- ISO8601 UTC timestamp of API fetch
-    
+
     -- Write metadata (provenance)
     _written_at TEXT NOT NULL,           -- ISO8601 UTC timestamp when row was written
     _git_hash TEXT NOT NULL,             -- Git commit hash of code that wrote this row
-    _version TEXT NOT NULL,              -- Semantic version of project at write time
-    
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
-);
-```
-
-#### `venues`
-Reference table for venue/stadium information.
-
-```sql
-CREATE TABLE venues (
-    id INTEGER PRIMARY KEY,              -- MLB venueId
-    name TEXT NOT NULL,
-    city TEXT,
-    state TEXT,
-    stateAbbrev TEXT,
-    country TEXT,
-    
-    -- Location data (may be null)
-    latitude REAL,
-    longitude REAL,
-    elevation REAL,
-    timezone TEXT,
-    
-    -- API fetch metadata
-    _fetched_at TEXT NOT NULL,
-    
-    -- Write metadata (provenance)
-    _written_at TEXT NOT NULL,
-    _git_hash TEXT NOT NULL,
-    _version TEXT NOT NULL
+    _version TEXT NOT NULL               -- Semantic version of project at write time
 );
 ```
 
@@ -591,10 +553,9 @@ CREATE TABLE games (
     abstractGameState TEXT,              -- 'Final', 'Live', 'Preview'
     detailedState TEXT,                  -- 'Final', 'In Progress', etc.
     statusCode TEXT,
-    
-    -- Venue
-    venue_id INTEGER,
-    venue_name TEXT,                     -- Denormalized for convenience
+
+    -- Venue (denormalized, no venues table)
+    venue_name TEXT,
     
     -- Game details
     dayNight TEXT,                       -- 'day', 'night'
@@ -635,8 +596,7 @@ CREATE TABLE games (
     _version TEXT NOT NULL,
     
     FOREIGN KEY (away_team_id) REFERENCES teams(id),
-    FOREIGN KEY (home_team_id) REFERENCES teams(id),
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
+    FOREIGN KEY (home_team_id) REFERENCES teams(id)
 );
 
 CREATE INDEX idx_games_date ON games(gameDate);
@@ -711,16 +671,11 @@ CREATE TABLE game_batting (
     sacFlies INTEGER,
     catchersInterference INTEGER,
     pickoffs INTEGER,
-    
-    -- Calculated stats from API (as strings to preserve formatting)
-    avg TEXT,
-    obp TEXT,
-    slg TEXT,
-    ops TEXT,
-    
-    -- Game context
+
+    -- Rate stats from API (sparse - only provided in some contexts)
     atBatsPerHomeRun TEXT,
-    
+    stolenBasePercentage TEXT,
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
     
@@ -804,22 +759,18 @@ CREATE TABLE game_pitching (
     sacBunts INTEGER,
     sacFlies INTEGER,
     passedBall INTEGER,
-    
-    -- Calculated stats from API
-    era TEXT,
-    whip TEXT,
-    
+
     -- Game result attribution
     note TEXT,                           -- 'W', 'L', 'S', 'H', 'BS', etc.
-    
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
-    
+
     -- Write metadata (provenance)
     _written_at TEXT NOT NULL,
     _git_hash TEXT NOT NULL,
     _version TEXT NOT NULL,
-    
+
     FOREIGN KEY (gamePk) REFERENCES games(gamePk),
     FOREIGN KEY (player_id) REFERENCES players(id),
     FOREIGN KEY (team_id) REFERENCES teams(id),
@@ -1127,7 +1078,7 @@ PRAGMA cache_size = -64000;  # 64MB cache
 ### 3.4 Database Write Strategy
 
 **Game-Driven Approach:**
-Reference data (teams, venues, players) is fetched on-demand when encountered in game data, not up-front. This ensures we only store reference records for entities that appear in our games, and reference data stays fresh (always fetched from API, never cached).
+Reference data (teams, players) is fetched on-demand when encountered in game data, not up-front. This ensures we only store reference records for entities that appear in our games, and reference data stays fresh (always fetched from API, never cached). Venue names are extracted directly from the game feed and stored denormalized on the games table.
 
 **Upsert Behavior:**
 - Use `INSERT OR REPLACE` for all tables (full row replacement on primary key conflict)
@@ -1137,13 +1088,13 @@ Reference data (teams, venues, players) is fetched on-demand when encountered in
 
 **Transaction Boundaries:**
 - Each game is its own transaction (all tables for one game committed together)
-- Reference data (players, teams, venues) are individual transactions
+- Reference data (players, teams) are individual transactions
 - Batch inserts within a transaction for performance (e.g., all pitches for a game)
 
 **Write Order (foreign key compliance):**
-1. Teams and venues (no dependencies) - fetched when game encountered
+1. Teams (no dependencies) - fetched when game encountered
 2. Players (depends on teams) - fetched when boxscore encountered
-3. Games (depends on teams, venues)
+3. Games (depends on teams)
 4. Game officials (depends on games)
 5. Game batting/pitching (depends on games, players, teams)
 6. At-bats (depends on games, players)
@@ -1457,20 +1408,19 @@ tests/
 - Integration test: database schema creation and foreign keys
 
 ### Phase 2: Schedule, Games, and Reference Data (Teams/Venues)
-**Goal:** Fetch game schedules and metadata, with teams and venues fetched on-demand as encountered.
+**Goal:** Fetch game schedules and metadata, with teams fetched on-demand as encountered. Venue names are extracted from game feed.
 
-**Key Principle:** Games drive everything. When we encounter a team_id or venue_id in game data, we fetch and upsert that reference record immediately (no caching for reference data).
+**Key Principle:** Games drive everything. When we encounter a team_id in game data, we fetch and upsert that reference record immediately (no caching for reference data). Venue names are denormalized onto the games table.
 
 **Deliverables:**
 1. Build schedule collector (date range based)
 2. Build game metadata transformer
 3. Build team collector and transformer (called on-demand)
-4. Build venue collector and transformer (called on-demand)
-5. Implement `sync_team()` and `sync_venue()` helpers that always fetch fresh and upsert
-6. Add CLI commands:
+4. Implement `sync_team()` helper that always fetches fresh and upserts
+5. Add CLI commands:
    - `mlb-stats sync games --start-date YYYY-MM-DD --end-date YYYY-MM-DD`
    - `mlb-stats sync games --season YYYY`
-7. Write data dictionary documentation for teams, venues, games tables
+6. Write data dictionary documentation for teams, games tables
 
 **Data Flow:**
 ```
@@ -1481,8 +1431,7 @@ sync games --date 2024-07-01
   └─► For each gamePk:
         ├─► Fetch game feed
         ├─► Extract away_team_id, home_team_id → sync_team() for each
-        ├─► Extract venue_id → sync_venue()
-        ├─► Transform and upsert game record
+        ├─► Transform and upsert game record (with venue_name from feed)
         └─► Transform and upsert game_officials records
 ```
 
@@ -1492,7 +1441,6 @@ src/mlb_stats/
   models/
     __init__.py
     team.py                        # transform_team()
-    venue.py                       # transform_venue()
     game.py                        # transform_game(), transform_official()
   collectors/
     __init__.py
@@ -1500,7 +1448,6 @@ src/mlb_stats/
     schedule.py                    # ScheduleCollector
     game.py                        # GameCollector
     team.py                        # TeamCollector (on-demand)
-    venue.py                       # VenueCollector (on-demand)
   db/
     queries.py                     # upsert helpers
   utils/
@@ -1517,7 +1464,6 @@ tests/
     test_game_sync.py
   fixtures/
     team_119.json                  # Sample team response
-    venue_1.json                   # Sample venue response
     schedule_2024-07-01.json
     game_feed_745927.json
 ```
@@ -1526,22 +1472,22 @@ tests/
 - [ ] `mlb-stats sync games --start-date 2024-07-01 --end-date 2024-07-07` inserts ~100 games
 - [ ] `mlb-stats sync games --season 2024` inserts full season (~2,430 regular season games)
 - [ ] Teams table populated only with teams encountered in synced games
-- [ ] Venues table populated only with venues encountered in synced games
+- [ ] Venue names captured on games table (denormalized from game feed)
 - [ ] Re-running same date range updates `_written_at` timestamps (upsert works)
-- [ ] Teams/venues always fetched fresh (not cached)
+- [ ] Teams always fetched fresh (not cached)
 - [ ] All rows have `_written_at`, `_git_hash`, `_version` populated
 - [ ] Home plate umpire populated on games table
 - [ ] Game officials stored in game_officials table
 - [ ] Weather data captured when available
 - [ ] Doubleheaders correctly marked with gameNumber 1 and 2
-- [ ] DATA_DICTIONARY.md documents teams, venues, games tables
+- [ ] DATA_DICTIONARY.md documents teams, games tables
 
 **Tests:**
-- Unit tests for team/venue/game transformations
+- Unit tests for team/game transformations
 - Unit tests for schedule parsing
 - Unit tests for date range handling
 - Integration test: sync a week of games
-- Verify teams/venues created as side effect of game sync
+- Verify teams created as side effect of game sync
 - Verify idempotent re-syncs
 
 ### Phase 3: Box Scores and Player Reference Data
