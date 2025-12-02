@@ -168,6 +168,96 @@ def delete_game_pitching(conn: sqlite3.Connection, gamePk: int) -> None:
     conn.execute("DELETE FROM game_pitching WHERE gamePk = ?", (gamePk,))
 
 
+def upsert_pitch(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace pitch record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Pitch row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "pitches", row)
+
+
+def upsert_at_bat(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace at_bat record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        At-bat row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "at_bats", row)
+
+
+def upsert_batted_ball(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace batted_ball record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Batted ball row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "batted_balls", row)
+
+
+def delete_pitches(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all pitch records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM pitches WHERE gamePk = ?", (gamePk,))
+
+
+def delete_at_bats(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all at_bat records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM at_bats WHERE gamePk = ?", (gamePk,))
+
+
+def delete_batted_balls(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all batted_ball records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM batted_balls WHERE gamePk = ?", (gamePk,))
+
+
 def _upsert(conn: sqlite3.Connection, table: str, row: dict) -> None:
     """Generic INSERT OR REPLACE helper.
 

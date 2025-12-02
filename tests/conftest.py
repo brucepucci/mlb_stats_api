@@ -186,7 +186,181 @@ def sample_game_feed() -> dict:
                     "away": {"teamStats": {}, "players": {}},
                     "home": {"teamStats": {}, "players": {}},
                 }
-            }
+            },
+            "plays": {
+                "allPlays": [
+                    {
+                        "result": {
+                            "type": "atBat",
+                            "event": "Strikeout",
+                            "eventType": "strikeout",
+                            "description": "Test Batter strikes out.",
+                            "rbi": 0,
+                            "awayScore": 0,
+                            "homeScore": 0,
+                        },
+                        "about": {
+                            "atBatIndex": 0,
+                            "halfInning": "top",
+                            "inning": 1,
+                            "startTime": "2024-07-02T02:15:00Z",
+                            "endTime": "2024-07-02T02:18:00Z",
+                            "isComplete": True,
+                            "isScoringPlay": False,
+                            "hasReview": False,
+                            "hasOut": True,
+                        },
+                        "count": {"balls": 1, "strikes": 3, "outs": 1},
+                        "matchup": {
+                            "batter": {"id": 660271, "fullName": "Shohei Ohtani"},
+                            "pitcher": {"id": 543243, "fullName": "Test Pitcher"},
+                            "batSide": {"code": "L"},
+                            "pitchHand": {"code": "R"},
+                        },
+                        "playEvents": [
+                            {
+                                "details": {
+                                    "call": {"code": "B", "description": "Ball"},
+                                    "isInPlay": False,
+                                    "isStrike": False,
+                                    "isBall": True,
+                                    "type": {"code": "FF", "description": "Fastball"},
+                                },
+                                "count": {"balls": 1, "strikes": 0, "outs": 0},
+                                "pitchData": {
+                                    "startSpeed": 95.0,
+                                    "endSpeed": 87.0,
+                                    "zone": 14,
+                                    "coordinates": {"pX": -1.5, "pZ": 3.3},
+                                    "breaks": {"spinRate": 2400, "spinDirection": 180},
+                                },
+                                "pitchNumber": 1,
+                                "playId": "test-pitch-1",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                            {
+                                "details": {
+                                    "call": {"code": "S", "description": "Strike"},
+                                    "isInPlay": False,
+                                    "isStrike": True,
+                                    "isBall": False,
+                                    "type": {"code": "SL", "description": "Slider"},
+                                },
+                                "count": {"balls": 1, "strikes": 1, "outs": 0},
+                                "pitchData": {"startSpeed": 87.0},
+                                "pitchNumber": 2,
+                                "playId": "test-pitch-2",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                            {
+                                "details": {
+                                    "call": {"code": "S", "description": "Strike"},
+                                    "isInPlay": False,
+                                    "isStrike": True,
+                                    "isBall": False,
+                                    "type": {"code": "FF", "description": "Fastball"},
+                                },
+                                "count": {"balls": 1, "strikes": 2, "outs": 0},
+                                "pitchData": {"startSpeed": 96.0},
+                                "pitchNumber": 3,
+                                "playId": "test-pitch-3",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                            {
+                                "details": {
+                                    "call": {"code": "S", "description": "Strike"},
+                                    "isInPlay": False,
+                                    "isStrike": True,
+                                    "isBall": False,
+                                    "type": {"code": "CH", "description": "Changeup"},
+                                },
+                                "count": {"balls": 1, "strikes": 3, "outs": 1},
+                                "pitchData": {"startSpeed": 85.0},
+                                "pitchNumber": 4,
+                                "playId": "test-pitch-4",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                        ],
+                    },
+                    {
+                        "result": {
+                            "type": "atBat",
+                            "event": "Single",
+                            "eventType": "single",
+                            "description": "Test Pitcher singles to left.",
+                            "rbi": 0,
+                            "awayScore": 0,
+                            "homeScore": 0,
+                        },
+                        "about": {
+                            "atBatIndex": 1,
+                            "halfInning": "bottom",
+                            "inning": 1,
+                            "startTime": "2024-07-02T02:25:00Z",
+                            "endTime": "2024-07-02T02:27:00Z",
+                            "isComplete": True,
+                            "isScoringPlay": False,
+                            "hasReview": False,
+                            "hasOut": False,
+                        },
+                        "count": {"balls": 1, "strikes": 0, "outs": 1},
+                        "matchup": {
+                            "batter": {"id": 543243, "fullName": "Test Pitcher"},
+                            "pitcher": {"id": 660271, "fullName": "Shohei Ohtani"},
+                            "batSide": {"code": "R"},
+                            "pitchHand": {"code": "R"},
+                        },
+                        "playEvents": [
+                            {
+                                "details": {
+                                    "call": {"code": "B", "description": "Ball"},
+                                    "isInPlay": False,
+                                    "isStrike": False,
+                                    "isBall": True,
+                                    "type": {"code": "FF", "description": "Fastball"},
+                                },
+                                "count": {"balls": 1, "strikes": 0, "outs": 1},
+                                "pitchData": {"startSpeed": 98.0},
+                                "pitchNumber": 1,
+                                "playId": "test-pitch-5",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                            {
+                                "details": {
+                                    "call": {"code": "X", "description": "In play"},
+                                    "isInPlay": True,
+                                    "isStrike": False,
+                                    "isBall": False,
+                                    "type": {"code": "FF", "description": "Fastball"},
+                                },
+                                "count": {"balls": 1, "strikes": 0, "outs": 1},
+                                "pitchData": {
+                                    "startSpeed": 97.5,
+                                    "coordinates": {"pX": 0.1, "pZ": 2.5},
+                                },
+                                "hitData": {
+                                    "launchSpeed": 95.0,
+                                    "launchAngle": 15,
+                                    "totalDistance": 250,
+                                    "trajectory": "line_drive",
+                                    "hardness": "hard",
+                                    "location": "7",
+                                    "coordinates": {"coordX": 80.0, "coordY": 120.0},
+                                },
+                                "pitchNumber": 2,
+                                "playId": "test-pitch-6",
+                                "isPitch": True,
+                                "type": "pitch",
+                            },
+                        ],
+                    },
+                ]
+            },
         },
     }
 
@@ -359,6 +533,317 @@ def sample_boxscore() -> dict:
                 "battingOrder": [],
             },
         }
+    }
+
+
+@pytest.fixture
+def sample_play() -> dict:
+    """Sample play (at-bat) from allPlays for testing.
+
+    Returns
+    -------
+    dict
+        Complete play structure with pitch events
+    """
+    return {
+        "result": {
+            "type": "atBat",
+            "event": "Strikeout",
+            "eventType": "strikeout",
+            "description": "Test Batter strikes out swinging.",
+            "rbi": 0,
+            "awayScore": 0,
+            "homeScore": 0,
+            "isOut": True,
+        },
+        "about": {
+            "atBatIndex": 0,
+            "halfInning": "top",
+            "isTopInning": True,
+            "inning": 1,
+            "startTime": "2024-07-02T02:15:00Z",
+            "endTime": "2024-07-02T02:18:00Z",
+            "isComplete": True,
+            "isScoringPlay": False,
+            "hasReview": False,
+            "hasOut": True,
+        },
+        "count": {
+            "balls": 1,
+            "strikes": 3,
+            "outs": 1,
+        },
+        "matchup": {
+            "batter": {"id": 660271, "fullName": "Shohei Ohtani"},
+            "pitcher": {"id": 543243, "fullName": "Test Pitcher"},
+            "batSide": {"code": "L", "description": "Left"},
+            "pitchHand": {"code": "R", "description": "Right"},
+        },
+        "playEvents": [
+            {
+                "details": {
+                    "call": {"code": "B", "description": "Ball"},
+                    "description": "Ball",
+                    "isInPlay": False,
+                    "isStrike": False,
+                    "isBall": True,
+                    "type": {"code": "FF", "description": "Four-Seam Fastball"},
+                },
+                "count": {"balls": 1, "strikes": 0, "outs": 0},
+                "pitchData": {
+                    "startSpeed": 95.2,
+                    "endSpeed": 87.1,
+                    "zone": 14,
+                    "strikeZoneTop": 3.49,
+                    "strikeZoneBottom": 1.6,
+                    "coordinates": {
+                        "x": 120.5,
+                        "y": 180.3,
+                        "pX": -1.45,
+                        "pZ": 3.31,
+                        "x0": -1.72,
+                        "y0": 50.0,
+                        "z0": 5.64,
+                        "vX0": 8.21,
+                        "vY0": -128.65,
+                        "vZ0": -6.34,
+                        "aX": 0.24,
+                        "aY": 27.1,
+                        "aZ": -31.21,
+                        "pfxX": -6.15,
+                        "pfxZ": 7.57,
+                    },
+                    "breaks": {
+                        "breakAngle": 3.6,
+                        "breakLength": 8.4,
+                        "breakY": 24.0,
+                        "spinRate": 2423,
+                        "spinDirection": 184,
+                    },
+                    "typeConfidence": 0.9,
+                    "plateTime": 0.43,
+                    "extension": 6.22,
+                },
+                "index": 0,
+                "playId": "pitch-1",
+                "pitchNumber": 1,
+                "startTime": "2024-07-02T02:15:00Z",
+                "endTime": "2024-07-02T02:15:05Z",
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "S", "description": "Swinging Strike"},
+                    "description": "Swinging Strike",
+                    "isInPlay": False,
+                    "isStrike": True,
+                    "isBall": False,
+                    "type": {"code": "SL", "description": "Slider"},
+                },
+                "count": {"balls": 1, "strikes": 1, "outs": 0},
+                "pitchData": {
+                    "startSpeed": 87.5,
+                    "endSpeed": 80.2,
+                    "zone": 6,
+                    "strikeZoneTop": 3.49,
+                    "strikeZoneBottom": 1.6,
+                    "coordinates": {
+                        "x": 115.0,
+                        "y": 175.0,
+                        "pX": 0.35,
+                        "pZ": 2.1,
+                    },
+                    "breaks": {
+                        "spinRate": 2650,
+                        "spinDirection": 45,
+                    },
+                    "typeConfidence": 0.85,
+                },
+                "index": 1,
+                "playId": "pitch-2",
+                "pitchNumber": 2,
+                "startTime": "2024-07-02T02:15:30Z",
+                "endTime": "2024-07-02T02:15:35Z",
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "S", "description": "Swinging Strike"},
+                    "description": "Swinging Strike",
+                    "isInPlay": False,
+                    "isStrike": True,
+                    "isBall": False,
+                    "type": {"code": "FF", "description": "Four-Seam Fastball"},
+                },
+                "count": {"balls": 1, "strikes": 2, "outs": 0},
+                "pitchData": {
+                    "startSpeed": 96.0,
+                    "endSpeed": 88.0,
+                    "zone": 5,
+                    "strikeZoneTop": 3.49,
+                    "strikeZoneBottom": 1.6,
+                    "coordinates": {
+                        "pX": 0.1,
+                        "pZ": 2.5,
+                    },
+                },
+                "index": 2,
+                "playId": "pitch-3",
+                "pitchNumber": 3,
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "S", "description": "Swinging Strike"},
+                    "description": "Swinging Strike",
+                    "isInPlay": False,
+                    "isStrike": True,
+                    "isBall": False,
+                    "type": {"code": "CH", "description": "Changeup"},
+                },
+                "count": {"balls": 1, "strikes": 3, "outs": 1},
+                "pitchData": {
+                    "startSpeed": 85.0,
+                    "endSpeed": 78.0,
+                    "zone": 6,
+                },
+                "index": 3,
+                "playId": "pitch-4",
+                "pitchNumber": 4,
+                "isPitch": True,
+                "type": "pitch",
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def sample_play_with_hit() -> dict:
+    """Sample play with a ball put in play for testing batted ball data.
+
+    Returns
+    -------
+    dict
+        Play structure with hitData on the final pitch
+    """
+    return {
+        "result": {
+            "type": "atBat",
+            "event": "Single",
+            "eventType": "single",
+            "description": "Test Batter singles to left field.",
+            "rbi": 1,
+            "awayScore": 1,
+            "homeScore": 0,
+            "isOut": False,
+        },
+        "about": {
+            "atBatIndex": 5,
+            "halfInning": "top",
+            "isTopInning": True,
+            "inning": 2,
+            "startTime": "2024-07-02T02:30:00Z",
+            "endTime": "2024-07-02T02:32:00Z",
+            "isComplete": True,
+            "isScoringPlay": True,
+            "hasReview": False,
+            "hasOut": False,
+        },
+        "count": {
+            "balls": 2,
+            "strikes": 1,
+            "outs": 0,
+        },
+        "matchup": {
+            "batter": {"id": 660271, "fullName": "Shohei Ohtani"},
+            "pitcher": {"id": 543243, "fullName": "Test Pitcher"},
+            "batSide": {"code": "L", "description": "Left"},
+            "pitchHand": {"code": "R", "description": "Right"},
+        },
+        "playEvents": [
+            {
+                "details": {
+                    "call": {"code": "B", "description": "Ball"},
+                    "isInPlay": False,
+                    "isStrike": False,
+                    "isBall": True,
+                    "type": {"code": "FF", "description": "Four-Seam Fastball"},
+                },
+                "count": {"balls": 1, "strikes": 0, "outs": 0},
+                "pitchData": {"startSpeed": 94.5},
+                "pitchNumber": 1,
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "C", "description": "Called Strike"},
+                    "isInPlay": False,
+                    "isStrike": True,
+                    "isBall": False,
+                    "type": {"code": "SL", "description": "Slider"},
+                },
+                "count": {"balls": 1, "strikes": 1, "outs": 0},
+                "pitchData": {"startSpeed": 86.0},
+                "pitchNumber": 2,
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "B", "description": "Ball"},
+                    "isInPlay": False,
+                    "isStrike": False,
+                    "isBall": True,
+                    "type": {"code": "CH", "description": "Changeup"},
+                },
+                "count": {"balls": 2, "strikes": 1, "outs": 0},
+                "pitchData": {"startSpeed": 84.0},
+                "pitchNumber": 3,
+                "isPitch": True,
+                "type": "pitch",
+            },
+            {
+                "details": {
+                    "call": {"code": "X", "description": "In play, no out"},
+                    "description": "In play, no out",
+                    "isInPlay": True,
+                    "isStrike": False,
+                    "isBall": False,
+                    "type": {"code": "FF", "description": "Four-Seam Fastball"},
+                },
+                "count": {"balls": 2, "strikes": 1, "outs": 0},
+                "pitchData": {
+                    "startSpeed": 95.0,
+                    "endSpeed": 87.0,
+                    "zone": 5,
+                    "coordinates": {
+                        "pX": 0.2,
+                        "pZ": 2.8,
+                    },
+                },
+                "hitData": {
+                    "launchSpeed": 101.9,
+                    "launchAngle": 12,
+                    "totalDistance": 285,
+                    "trajectory": "line_drive",
+                    "hardness": "hard",
+                    "location": "7",
+                    "coordinates": {
+                        "coordX": 85.4,
+                        "coordY": 125.2,
+                    },
+                },
+                "index": 3,
+                "playId": "hit-pitch-1",
+                "pitchNumber": 4,
+                "isPitch": True,
+                "type": "pitch",
+            },
+        ],
     }
 
 

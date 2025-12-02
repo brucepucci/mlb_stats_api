@@ -7,6 +7,7 @@ from typing import Callable
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.game import sync_game
+from mlb_stats.collectors.play_by_play import sync_play_by_play
 from mlb_stats.collectors.schedule import fetch_schedule
 from mlb_stats.db.queries import (
     delete_game_batting,
@@ -66,7 +67,7 @@ def sync_boxscore(
     conn: sqlite3.Connection,
     game_pk: int,
 ) -> bool:
-    """Fetch boxscore and sync batting/pitching stats with player data.
+    """Fetch boxscore and sync all game stats including pitch-level data.
 
     Parameters
     ----------
@@ -92,6 +93,7 @@ def sync_boxscore(
     2. Extract and sync players from gameData.players
     3. Delete existing batting/pitching records for game
     4. Insert new batting/pitching records
+    5. Sync play-by-play (pitches, at-bats, batted balls)
     """
     logger.info("Syncing boxscore for game %d", game_pk)
 
@@ -174,6 +176,9 @@ def sync_boxscore(
             len(batting_rows),
             len(pitching_rows),
         )
+
+        # 6. Sync play-by-play (pitches, at-bats, batted balls)
+        sync_play_by_play(client, conn, game_pk)
 
         return True
 
