@@ -96,7 +96,17 @@ def init_db(ctx: click.Context) -> None:
     "--all",
     "sync_all",
     is_flag=True,
-    help="Sync all data from 2015 to today (Statcast era).",
+    help="Sync all data from 2008 to today (PITCHf/x era).",
+)
+@click.option(
+    "--start-season",
+    type=int,
+    help="Start season (e.g., 2008). Can be used alone or with --end-season.",
+)
+@click.option(
+    "--end-season",
+    type=int,
+    help="End season (e.g., 2024). Can be used alone or with --start-season.",
 )
 @click.option(
     "--force-refresh",
@@ -111,12 +121,15 @@ def sync(
     end_date: str | None,
     season: int | None,
     sync_all: bool,
+    start_season: int | None,
+    end_season: int | None,
     force_refresh: bool,
 ) -> None:
     """Sync all game data from MLB Stats API.
 
     Fetches games, teams, players, and batting/pitching stats.
-    Can sync a single game by gamePk, a date range, or an entire season.
+    Can sync a single game by gamePk, a date range, an entire season,
+    or a range of seasons.
 
     Examples:
 
@@ -125,6 +138,10 @@ def sync(
         mlb-stats sync --start-date 2024-07-01 --end-date 2024-07-07
 
         mlb-stats sync --season 2024
+
+        mlb-stats sync --start-season 2010 --end-season 2015
+
+        mlb-stats sync --start-season 2018
 
         mlb-stats sync --all --force-refresh
     """
@@ -139,23 +156,45 @@ def sync(
 
     # Validate options
     if game_pk is not None:
-        if start_date or end_date or season or sync_all:
+        if start_date or end_date or season or sync_all or start_season or end_season:
             raise click.UsageError(
-                "Cannot use gamePk with --start-date/--end-date/--season/--all"
+                "Cannot use gamePk with date/season options"
             )
     elif sync_all:
+        if start_date or end_date or season or start_season or end_season:
+            raise click.UsageError(
+                "Cannot use --all with other date/season options"
+            )
+        # Set to full PITCHf/x era (2008-present)
+        current_year = date.today().year
+        start_season = 2008
+        end_season = current_year
+    elif start_season is not None or end_season is not None:
         if start_date or end_date or season:
             raise click.UsageError(
-                "Cannot use --all with --start-date/--end-date/--season"
+                "Cannot use --start-season/--end-season with date range or --season"
             )
-        # Dates set per-year in the sync loop (API has per-request limits)
+        # Default start to 2008, end to current year
+        current_year = date.today().year
+        start_season = start_season or 2008
+        end_season = end_season or current_year
+
+        # Validate range
+        if start_season > end_season:
+            raise click.UsageError(
+                f"--start-season ({start_season}) cannot be after --end-season ({end_season})"
+            )
+        if start_season < 2008:
+            raise click.UsageError(
+                "Data is only available from 2008 onwards (PITCHf/x era)"
+            )
     elif season:
         if start_date or end_date:
             raise click.UsageError("Cannot use --season with --start-date/--end-date")
         start_date, end_date = season_dates(season)
     elif not (start_date and end_date):
         raise click.UsageError(
-            "Must provide gamePk, --season, --all, or both --start-date and --end-date"
+            "Must provide gamePk, --season, --all, season range, or both --start-date and --end-date"
         )
 
     # Validate date format if provided
@@ -175,6 +214,50 @@ def sync(
     # Create client
     client = MLBStatsClient(cache_dir=cache_dir)
 
+    def sync_season_range(
+        start_year: int, end_year: int
+    ) -> tuple[int, int]:
+        """Sync a range of seasons year-by-year.
+
+        Parameters
+        ----------
+        start_year : int
+            First season to sync (inclusive)
+        end_year : int
+            Last season to sync (inclusive)
+
+        Returns
+        -------
+        tuple[int, int]
+            (total_success, total_failures) across all seasons
+        """
+        total_success = 0
+        total_failures = 0
+
+        for year in range(start_year, end_year + 1):
+            season_start, season_end = season_dates(year)
+            click.echo(f"\n=== Syncing {year} season ===")
+
+            def progress(current: int, total: int) -> None:
+                click.echo(
+                    f"\r[{year}] Syncing game {current}/{total}...", nl=False
+                )
+
+            success, failures = sync_boxscores_for_date_range(
+                client,
+                conn,
+                season_start,
+                season_end,
+                progress_callback=progress,
+                force_refresh=force_refresh,
+            )
+            click.echo()
+            click.echo(f"[{year}] {success} games synced, {failures} failures")
+            total_success += success
+            total_failures += failures
+
+        return total_success, total_failures
+
     try:
         if game_pk is not None:
             # Single game sync
@@ -185,40 +268,16 @@ def sync(
             else:
                 click.echo("Sync failed (game may not have started)")
                 ctx.exit(1)
-        elif sync_all:
-            # Sync all years (API has per-request limit, must iterate by season)
-            current_year = date.today().year
-            total_success = 0
-            total_failures = 0
-
-            for year in range(2015, current_year + 1):
-                season_start, season_end = season_dates(year)
-                click.echo(f"\n=== Syncing {year} season ===")
-
-                def progress(current: int, total: int) -> None:
-                    click.echo(
-                        f"\r[{year}] Syncing game {current}/{total}...", nl=False
-                    )
-
-                success, failures = sync_boxscores_for_date_range(
-                    client,
-                    conn,
-                    season_start,
-                    season_end,
-                    progress_callback=progress,
-                    force_refresh=force_refresh,
-                )
-                click.echo()
-                click.echo(f"[{year}] {success} games synced, {failures} failures")
-                total_success += success
-                total_failures += failures
+        elif sync_all or (start_season is not None and end_season is not None):
+            # Sync season range (either --all or --start-season/--end-season)
+            success, failures = sync_season_range(start_season, end_season)
 
             click.echo(f"\n=== All seasons complete ===")
             click.echo(
-                f"Total: {total_success} games synced, {total_failures} failures"
+                f"Total: {success} games synced, {failures} failures"
             )
 
-            if total_failures > 0:
+            if failures > 0:
                 ctx.exit(1)
         else:
             # Date range sync

@@ -38,6 +38,14 @@ Every table includes write metadata columns:
 - `_git_hash` - Git commit hash of code that wrote the row
 - `_version` - Semantic version of the application
 
+## Historical Data Eras
+
+- **2008-2014:** PITCHf/x era - pitch tracking without Statcast enhancements
+- **2015+:** Statcast era - full pitch and batted ball tracking
+- **Pre-2008:** Limited data - no pitch-level tracking available
+
+Pre-2015 games will have NULL values for Statcast-specific fields (`extension`, `plateTime`, `launchSpeed`, `launchAngle`, `totalDistance`).
+
 ## Write Metadata Pattern
 
 ```python
