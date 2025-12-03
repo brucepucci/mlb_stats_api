@@ -58,8 +58,17 @@ uv run mlb-stats sync --start-date 2024-07-01 --end-date 2024-07-07
 # Sync all games for a season
 uv run mlb-stats sync --season 2024
 
-# Sync all data from 2015 to today (Statcast era)
+# Sync all data from 2008 to today (PITCHf/x era)
 uv run mlb-stats sync --all
+
+# Sync specific season range
+uv run mlb-stats sync --start-season 2010 --end-season 2015
+
+# Sync from 2018 to present
+uv run mlb-stats sync --start-season 2018
+
+# Sync from 2008 through 2020
+uv run mlb-stats sync --end-season 2020
 
 # Force refresh from API (ignore games already in database)
 uv run mlb-stats sync --season 2024 --force-refresh
@@ -69,6 +78,20 @@ uv run mlb-stats sync --all --force-refresh
 ```
 
 **Note:** The `--force-refresh` flag is useful when you have partial data in the database and want to fetch the complete schedule from the API. Without it, the sync will only process games already in the database for that date range.
+
+### Data Availability by Era
+
+| Year Range | Pitch Data | Batted Ball Statcast |
+|------------|------------|---------------------|
+| 2008-2014 | PITCHf/x (velocity, location, spin, break) | ❌ No exit velo/launch angle |
+| 2015+ | Statcast (PITCHf/x + extension, plateTime) | ✅ Yes (72-94% coverage) |
+
+Pre-2015 games will have NULL values for:
+- `extension` (pitcher release extension)
+- `plateTime` (time to reach plate)
+- `launchSpeed` (exit velocity)
+- `launchAngle` (launch angle)
+- `totalDistance` (hit distance)
 
 ### Global Options
 
@@ -101,8 +124,14 @@ uv run mlb-stats sync --start-date 2024-03-28 --end-date 2024-03-28
 # Sync the entire 2023 season (this will take a while)
 uv run mlb-stats sync --season 2023 --force-refresh
 
-# Sync all Statcast-era data (2015-present, ~30,000+ games)
+# Sync all PITCHf/x era data (2008-present, ~40,000+ games)
 uv run mlb-stats sync --all --force-refresh
+
+# Sync just the PITCHf/x-only era (before Statcast)
+uv run mlb-stats sync --start-season 2008 --end-season 2014
+
+# Sync a specific decade
+uv run mlb-stats sync --start-season 2010 --end-season 2019
 ```
 
 ### Querying the Database
