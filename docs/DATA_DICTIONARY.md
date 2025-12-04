@@ -2,6 +2,10 @@
 
 Field definitions and sources for MLB Stats Collector database tables.
 
+**See also:**
+- [DATABASE_GUIDE.md](DATABASE_GUIDE.md) - Query patterns and current data coverage
+- [DATABASE_ASSESSMENT.md](DATABASE_ASSESSMENT.md) - Database size assessment and performance analysis
+
 ## Metadata Columns
 
 All tables include the following metadata columns:

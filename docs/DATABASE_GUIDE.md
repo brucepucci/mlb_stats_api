@@ -31,19 +31,44 @@ Game type codes:
 
 ## Current Data Coverage
 
+**Last Updated:** 2025-12-03
+
 | Table | Row Count | Description |
 |-------|-----------|-------------|
-| games | 142 | Game metadata |
-| teams | 31 | Team reference data |
-| players | 2,752 | Player biographical data |
-| game_batting | 3,703 | Per-player batting stats per game |
-| game_pitching | 1,526 | Per-player pitching stats per game |
-| at_bats | 10,788 | Plate appearance summaries |
-| pitches | 41,830 | Individual pitch data with Statcast |
-| batted_balls | 7,214 | Balls put in play with exit velo/launch angle |
-| game_officials | 563 | Umpires per game |
+| games | 51,574 | Game metadata (2008-2025) |
+| teams | 136 | Team reference data (including historical) |
+| players | 19,401 | Player biographical data |
+| game_batting | 1,329,168 | Per-player batting stats per game |
+| game_pitching | 454,620 | Per-player pitching stats per game |
+| at_bats | 3,910,551 | Plate appearance summaries |
+| pitches | 14,067,818 | Individual pitch data with Statcast |
+| batted_balls | 2,723,285 | Balls put in play with exit velo/launch angle |
+| game_officials | 206,010 | Umpires per game |
 
-**Date Range:** Check with `SELECT MIN(gameDate), MAX(gameDate) FROM games;`
+**Date Range:** 2008-02-26 to 2025-11-01
+**Seasons:** 18 (2008-2025)
+**Regular Season Games:** 42,190
+**Postseason Games:** 9,384
+
+### Database File Statistics
+
+- **File Size:** 10.3 GB
+- **Page Count:** 2,709,537 pages
+- **Page Size:** 4,096 bytes
+- **Cache Size:** 2,000 pages (~8 MB)
+
+### Statcast Data Coverage
+
+**Pitch-Level Metrics:**
+- Spin Rate: 92.0% coverage (12.9M of 14.1M pitches)
+- Extension: 45.7% coverage (6.4M of 14.1M pitches)
+- Average pitches per game: 273.9
+
+**Batted Ball Metrics:**
+- Exit Velocity: 48.1% coverage (1.3M of 2.7M batted balls)
+- Launch Angle: 48.1% coverage (1.3M of 2.7M batted balls)
+
+*Note: Coverage varies by era - pre-2015 games have limited Statcast data.*
 
 ---
 
