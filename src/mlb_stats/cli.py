@@ -157,14 +157,10 @@ def sync(
     # Validate options
     if game_pk is not None:
         if start_date or end_date or season or sync_all or start_season or end_season:
-            raise click.UsageError(
-                "Cannot use gamePk with date/season options"
-            )
+            raise click.UsageError("Cannot use gamePk with date/season options")
     elif sync_all:
         if start_date or end_date or season or start_season or end_season:
-            raise click.UsageError(
-                "Cannot use --all with other date/season options"
-            )
+            raise click.UsageError("Cannot use --all with other date/season options")
         # Set to full PITCHf/x era (2008-present)
         current_year = date.today().year
         start_season = 2008
@@ -214,9 +210,7 @@ def sync(
     # Create client
     client = MLBStatsClient(cache_dir=cache_dir)
 
-    def sync_season_range(
-        start_year: int, end_year: int
-    ) -> tuple[int, int]:
+    def sync_season_range(start_year: int, end_year: int) -> tuple[int, int]:
         """Sync a range of seasons year-by-year.
 
         Parameters
@@ -239,9 +233,7 @@ def sync(
             click.echo(f"\n=== Syncing {year} season ===")
 
             def progress(current: int, total: int) -> None:
-                click.echo(
-                    f"\r[{year}] Syncing game {current}/{total}...", nl=False
-                )
+                click.echo(f"\r[{year}] Syncing game {current}/{total}...", nl=False)
 
             success, failures = sync_boxscores_for_date_range(
                 client,
@@ -273,9 +265,7 @@ def sync(
             success, failures = sync_season_range(start_season, end_season)
 
             click.echo(f"\n=== All seasons complete ===")
-            click.echo(
-                f"Total: {success} games synced, {failures} failures"
-            )
+            click.echo(f"Total: {success} games synced, {failures} failures")
 
             if failures > 0:
                 ctx.exit(1)
