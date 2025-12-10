@@ -100,6 +100,85 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 ---
 
+## Database Indexes
+
+The database includes performance-optimized indexes on commonly queried columns and column combinations:
+
+### Games Table
+- `idx_games_date` - Query by game date
+- `idx_games_season` - Query by season/year
+- `idx_games_away_team` - Query by away team
+- `idx_games_home_team` - Query by home team
+- `idx_games_type` - Filter by game type (R, F, D, L, W, S, A, E)
+- `idx_games_state` - Filter by game state (Final, Live, Preview)
+- `idx_games_season_type` - Composite index for season + game type queries
+
+### Teams Table
+- `idx_teams_name` - Search by team name
+- `idx_teams_abbr` - Search by abbreviation (LAD, NYY, etc.)
+
+### Players Table
+- `idx_players_name` - Search by player name
+- `idx_players_team` - Query players by current team
+- `idx_players_active` - Filter active/inactive players
+
+### Game Officials Table
+- `idx_game_officials_gamepk` - Query umpires by game
+- `idx_game_officials_official` - Query games by umpire
+
+### Game Batting Table
+- `idx_game_batting_gamepk` - Query batting stats by game
+- `idx_game_batting_player` - Query a player's batting stats
+- `idx_game_batting_team` - Query team batting stats
+- `idx_game_batting_player_game` - Composite index for player-centric game queries
+
+### Game Pitching Table
+- `idx_game_pitching_gamepk` - Query pitching stats by game
+- `idx_game_pitching_player` - Query a player's pitching stats
+- `idx_game_pitching_team` - Query team pitching stats
+- `idx_game_pitching_order` - Filter by pitching order (starters: pitchingOrder=1)
+- `idx_game_pitching_player_game` - Composite index for player-centric game queries
+
+### Pitches Table
+- `idx_pitches_gamepk` - Query pitches by game
+- `idx_pitches_batter` - Query pitches faced by batter
+- `idx_pitches_pitcher` - Query pitches thrown by pitcher
+- `idx_pitches_atbat` - Query pitches in specific at-bat (composite: gamePk, atBatIndex)
+- `idx_pitches_type` - Filter by pitch type
+- `idx_pitches_spin` - Query by spin rate
+- `idx_pitches_velo` - Query by velocity
+- `idx_pitches_pitcher_type` - Composite index for pitch arsenal analysis
+- `idx_pitches_call` - Filter by pitch result (B, C, S, F, X, etc.)
+- `idx_pitches_game_atbat` - Duplicate of idx_pitches_atbat for specific query patterns
+
+### Batted Balls Table
+- `idx_batted_balls_gamepk` - Query batted balls by game
+- `idx_batted_balls_batter` - Query batted balls by batter
+- `idx_batted_balls_pitcher` - Query batted balls allowed by pitcher
+- `idx_batted_balls_exit_velo` - Query by exit velocity
+- `idx_batted_balls_launch_angle` - Query by launch angle
+- `idx_batted_balls_trajectory` - Filter by trajectory (fly_ball, ground_ball, etc.)
+- `idx_batted_balls_event` - Filter by event type (single, home_run, etc.)
+- `idx_batted_balls_batter_ev` - Composite index for exit velocity analysis
+- `idx_batted_balls_game_atbat` - Composite index for game + at-bat lookups
+
+### At-Bats Table
+- `idx_at_bats_gamepk` - Query at-bats by game
+- `idx_at_bats_batter` - Query at-bats by batter
+- `idx_at_bats_pitcher` - Query at-bats by pitcher
+- `idx_at_bats_event` - Filter by event type
+- `idx_at_bats_game_index` - Composite index for game + at-bat index lookups
+
+### Sync Log Table
+- `idx_sync_log_type` - Filter by sync type
+- `idx_sync_log_status` - Filter by status
+- `idx_sync_log_started` - Query by start time
+- `idx_sync_log_gamepk` - Query sync operations for specific game
+
+These indexes provide 10-100x performance improvements for common query patterns involving filtering, sorting, and joining on indexed columns.
+
+---
+
 ## Table Details
 
 ### 1. `teams` - Team Reference Data
