@@ -40,6 +40,7 @@ line_length = 88
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
     "slow: marks tests as slow (live API tests)",
 ]

@@ -8,6 +8,7 @@ from typing import Callable
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.game import sync_game
 from mlb_stats.collectors.play_by_play import sync_play_by_play
+from mlb_stats.collectors.roster import sync_game_rosters
 from mlb_stats.collectors.schedule import fetch_schedule
 from mlb_stats.db.queries import (
     delete_game_batting,
@@ -179,6 +180,25 @@ def sync_boxscore(
 
         # 6. Sync play-by-play (pitches, at-bats, batted balls)
         sync_play_by_play(client, conn, game_pk)
+
+        # 7. Sync rosters for both teams
+        game_data = game_feed.get("gameData", {})
+        game_date = game_data.get("datetime", {}).get("officialDate")
+        away_team_id = teams.get("away", {}).get("team", {}).get("id")
+        home_team_id = teams.get("home", {}).get("team", {}).get("id")
+
+        if game_date and away_team_id and home_team_id:
+            sync_game_rosters(
+                client, conn, game_pk, game_date, away_team_id, home_team_id
+            )
+        else:
+            logger.warning(
+                "Missing data for roster sync (game %d): date=%s, away=%s, home=%s",
+                game_pk,
+                game_date,
+                away_team_id,
+                home_team_id,
+            )
 
         return True
 

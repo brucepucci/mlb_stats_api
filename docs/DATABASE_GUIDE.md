@@ -44,6 +44,7 @@ Game type codes:
 | pitches | 14,067,818 | Individual pitch data with Statcast |
 | batted_balls | 2,723,285 | Balls put in play with exit velo/launch angle |
 | game_officials | 206,010 | Umpires per game |
+| game_rosters | ~2,680,000 | Active 26-man roster per team per game |
 
 **Date Range:** 2008-02-26 to 2025-11-01
 **Seasons:** 18 (2008-2025)
@@ -80,10 +81,12 @@ Game type codes:
 teams (id) ←──┬── players (currentTeam_id)
               ├── games (away_team_id, home_team_id)
               ├── game_batting (team_id)
-              └── game_pitching (team_id)
+              ├── game_pitching (team_id)
+              └── game_rosters (team_id)
 
 players (id) ←──┬── game_batting (player_id)
                 ├── game_pitching (player_id)
+                ├── game_rosters (player_id)
                 ├── at_bats (batter_id, pitcher_id)
                 ├── pitches (batter_id, pitcher_id)
                 └── batted_balls (batter_id, pitcher_id)
@@ -91,6 +94,7 @@ players (id) ←──┬── game_batting (player_id)
 games (gamePk) ←──┬── game_batting (gamePk)
                   ├── game_pitching (gamePk)
                   ├── game_officials (gamePk)
+                  ├── game_rosters (gamePk)
                   ├── at_bats (gamePk)
                   ├── pitches (gamePk)
                   └── batted_balls (gamePk)
@@ -346,6 +350,27 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | official_id | INTEGER | Umpire ID |
 | official_fullName | TEXT | Umpire name |
 | officialType | TEXT | "Home Plate", "First Base", "Second Base", "Third Base" |
+
+### 10. `game_rosters` - Active Roster Per Game
+
+Tracks which players were on each team's active 26-man roster for each game. Players absent from the roster were on IL/DL.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| gamePk | INTEGER | FK to games |
+| team_id | INTEGER | FK to teams |
+| player_id | INTEGER | FK to players |
+| jerseyNumber | TEXT | Jersey number at time of game |
+| position_code | TEXT | Position code (1-10, Y) |
+| position_name | TEXT | "Pitcher", "Catcher", etc. |
+| position_type | TEXT | "Pitcher", "Infielder", "Outfielder", etc. |
+| position_abbreviation | TEXT | "P", "C", "SS", "DH", etc. |
+| status_code | TEXT | "A" for Active |
+| status_description | TEXT | "Active" |
+
+**UNIQUE:** (gamePk, team_id, player_id)
+
+**Use Case:** Detect IL/DL stints by finding games where a player is NOT on their team's roster.
 
 ---
 
@@ -629,6 +654,38 @@ FROM pitches
 WHERE gamePk = 745927
   AND atBatIndex = 0
 ORDER BY pitchNumber;
+```
+
+### IL/DL Detection (Using game_rosters)
+
+```sql
+-- Find dates when a player was NOT on active roster (IL/DL stint)
+SELECT g.gameDate, g.gamePk
+FROM games g
+WHERE (g.away_team_id = 119 OR g.home_team_id = 119)  -- Team ID
+  AND g.season = 2024
+  AND g.gameType = 'R'
+  AND NOT EXISTS (
+    SELECT 1 FROM game_rosters gr
+    WHERE gr.gamePk = g.gamePk
+      AND gr.player_id = 660271   -- Player ID (e.g., Shohei Ohtani)
+      AND gr.team_id = 119        -- Player's team
+  )
+ORDER BY g.gameDate;
+```
+
+```sql
+-- Compare roster vs boxscore: who was on roster but didn't play?
+SELECT
+    p.fullName,
+    gr.position_abbreviation
+FROM game_rosters gr
+JOIN players p ON gr.player_id = p.id
+LEFT JOIN game_batting gb ON gr.gamePk = gb.gamePk AND gr.player_id = gb.player_id
+LEFT JOIN game_pitching gp ON gr.gamePk = gp.gamePk AND gr.player_id = gp.player_id
+WHERE gr.gamePk = 745927
+  AND gb.player_id IS NULL
+  AND gp.player_id IS NULL;
 ```
 
 ---

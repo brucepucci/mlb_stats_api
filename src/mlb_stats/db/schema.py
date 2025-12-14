@@ -538,6 +538,45 @@ CREATE INDEX IF NOT EXISTS idx_batted_balls_trajectory ON batted_balls(trajector
 CREATE INDEX IF NOT EXISTS idx_batted_balls_event ON batted_balls(eventType);
 """
 
+CREATE_GAME_ROSTERS_TABLE = """
+CREATE TABLE IF NOT EXISTS game_rosters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    gamePk INTEGER NOT NULL,
+    team_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+
+    -- Position at time of roster snapshot
+    jerseyNumber TEXT,
+    position_code TEXT,
+    position_name TEXT,
+    position_type TEXT,
+    position_abbreviation TEXT,
+
+    -- Roster status
+    status_code TEXT,
+    status_description TEXT,
+
+    -- API fetch metadata
+    _fetched_at TEXT NOT NULL,
+
+    -- Write metadata (provenance)
+    _written_at TEXT NOT NULL,
+    _git_hash TEXT NOT NULL,
+    _version TEXT NOT NULL,
+
+    FOREIGN KEY (gamePk) REFERENCES games(gamePk),
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (player_id) REFERENCES players(id),
+    UNIQUE(gamePk, team_id, player_id)
+);
+"""
+
+CREATE_GAME_ROSTERS_INDICES = """
+CREATE INDEX IF NOT EXISTS idx_game_rosters_gamepk ON game_rosters(gamePk);
+CREATE INDEX IF NOT EXISTS idx_game_rosters_team ON game_rosters(team_id);
+CREATE INDEX IF NOT EXISTS idx_game_rosters_player ON game_rosters(player_id);
+"""
+
 CREATE_AT_BATS_TABLE = """
 CREATE TABLE IF NOT EXISTS at_bats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -681,7 +720,11 @@ def create_tables(conn: sqlite3.Connection) -> None:
     cursor.execute(CREATE_BATTED_BALLS_TABLE)
     cursor.executescript(CREATE_BATTED_BALLS_INDICES)
 
-    # 11. sync_log (no dependencies)
+    # 11. game_rosters (depends on games, teams, players)
+    cursor.execute(CREATE_GAME_ROSTERS_TABLE)
+    cursor.executescript(CREATE_GAME_ROSTERS_INDICES)
+
+    # 12. sync_log (no dependencies)
     cursor.execute(CREATE_SYNC_LOG_TABLE)
     cursor.executescript(CREATE_SYNC_LOG_INDICES)
 
@@ -707,5 +750,6 @@ def get_table_names() -> list[str]:
         "at_bats",
         "pitches",
         "batted_balls",
+        "game_rosters",
         "sync_log",
     ]
