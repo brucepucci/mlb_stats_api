@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS teams (
     league_name TEXT,
     division_id INTEGER,
     division_name TEXT,
-    active INTEGER,                      -- 1 or 0
+    active INTEGER CHECK (active IN (0, 1)),  -- 1 or 0
 
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS players (
     mlbDebutDate TEXT,
     lastPlayedDate TEXT,
 
-    active INTEGER,                      -- 1 or 0
+    active INTEGER CHECK (active IN (0, 1)),  -- 1 or 0
 
     currentTeam_id INTEGER,
 
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS game_pitching (
     team_id INTEGER NOT NULL,
 
     -- Role info
-    isStartingPitcher INTEGER,           -- 1 or 0
+    isStartingPitcher INTEGER CHECK (isStartingPitcher IN (0, 1)),  -- 1 or 0
     pitchingOrder INTEGER,               -- Order of appearance
 
     -- Standard pitching stats (preserve MLB field names)
@@ -379,9 +379,9 @@ CREATE TABLE IF NOT EXISTS pitches (
     -- Pitch result
     call_code TEXT,                      -- 'B', 'S', 'X', 'F', etc.
     call_description TEXT,               -- 'Ball', 'Called Strike', etc.
-    isInPlay INTEGER,                    -- 1 or 0
-    isStrike INTEGER,                    -- 1 or 0
-    isBall INTEGER,                      -- 1 or 0
+    isInPlay INTEGER CHECK (isInPlay IN (0, 1)),    -- 1 or 0
+    isStrike INTEGER CHECK (isStrike IN (0, 1)),    -- 1 or 0
+    isBall INTEGER CHECK (isBall IN (0, 1)),        -- 1 or 0
 
     -- Pitch type
     type_code TEXT,                      -- 'FF', 'SL', 'CH', etc.
@@ -565,10 +565,10 @@ CREATE TABLE IF NOT EXISTS at_bats (
     homeScore INTEGER,
 
     -- At-bat details
-    isComplete INTEGER,
-    hasReview INTEGER,
-    hasOut INTEGER,
-    isScoringPlay INTEGER,
+    isComplete INTEGER CHECK (isComplete IN (0, 1)),
+    hasReview INTEGER CHECK (hasReview IN (0, 1)),
+    hasOut INTEGER CHECK (hasOut IN (0, 1)),
+    isScoringPlay INTEGER CHECK (isScoringPlay IN (0, 1)),
 
     -- Count at end
     balls INTEGER,
