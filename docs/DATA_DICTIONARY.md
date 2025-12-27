@@ -313,6 +313,47 @@ Per-player pitching statistics for each game.
 
 ---
 
+## game_rosters
+
+Active 26-man roster for each team in each game. Players absent from the roster were on IL/DL.
+
+**Source:** `/v1/teams/{teamId}/roster/active?date=YYYY-MM-DD`
+
+| Column | Type | Nullable | Source | Description |
+|--------|------|----------|--------|-------------|
+| id | INTEGER | No | auto | Auto-increment primary key |
+| gamePk | INTEGER | No | - | Game ID (FK to games) |
+| team_id | INTEGER | No | - | Team ID (FK to teams) |
+| player_id | INTEGER | No | `roster[].person.id` | Player ID (FK to players) |
+| jerseyNumber | TEXT | Yes | `roster[].jerseyNumber` | Jersey number |
+| position_code | TEXT | Yes | `roster[].position.code` | Position code (1-10, Y) |
+| position_name | TEXT | Yes | `roster[].position.name` | Position name (e.g., "Pitcher") |
+| position_type | TEXT | Yes | `roster[].position.type` | Position type (e.g., "Pitcher", "Infielder") |
+| position_abbreviation | TEXT | Yes | `roster[].position.abbreviation` | Position abbreviation (e.g., "P", "SS") |
+| status_code | TEXT | Yes | `roster[].status.code` | Status code ("A" for Active) |
+| status_description | TEXT | Yes | `roster[].status.description` | Status description ("Active") |
+
+**Foreign Keys:**
+- `gamePk` → `games(gamePk)`
+- `team_id` → `teams(id)`
+- `player_id` → `players(id)`
+
+**Unique Constraint:**
+- `(gamePk, team_id, player_id)` - One roster entry per player per team per game
+
+**Indices:**
+- `idx_game_rosters_gamepk` on `gamePk`
+- `idx_game_rosters_team` on `team_id`
+- `idx_game_rosters_player` on `player_id`
+
+**Notes:**
+- Roster is fetched for the game date, not cached (rosters can change daily)
+- Each game has two rosters (away and home team)
+- Players on the IL/DL will NOT appear in this table for games during their IL stint
+- Use absence from roster to detect IL/DL periods
+
+---
+
 ## Example Queries
 
 ### Find all games for a team in a season
@@ -346,4 +387,34 @@ SELECT official_fullName, officialType
 FROM game_officials
 WHERE gamePk = 745927
 ORDER BY officialType;
+```
+
+### Get roster for a game
+```sql
+SELECT
+    t.abbreviation AS team,
+    p.fullName,
+    gr.jerseyNumber,
+    gr.position_abbreviation
+FROM game_rosters gr
+JOIN teams t ON gr.team_id = t.id
+JOIN players p ON gr.player_id = p.id
+WHERE gr.gamePk = 745927
+ORDER BY t.abbreviation, gr.position_code;
+```
+
+### Find IL/DL stints (player absent from roster)
+```sql
+SELECT g.gameDate
+FROM games g
+WHERE (g.away_team_id = 119 OR g.home_team_id = 119)
+  AND g.season = 2024
+  AND g.gameType = 'R'
+  AND NOT EXISTS (
+    SELECT 1 FROM game_rosters gr
+    WHERE gr.gamePk = g.gamePk
+      AND gr.player_id = 660271
+      AND gr.team_id = 119
+  )
+ORDER BY g.gameDate;
 ```

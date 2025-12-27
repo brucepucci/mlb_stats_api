@@ -847,6 +847,59 @@ def sample_play_with_hit() -> dict:
     }
 
 
+@pytest.fixture
+def sample_roster() -> dict:
+    """Sample roster response for testing.
+
+    Returns
+    -------
+    dict
+        Roster structure from /v1/teams/{teamId}/roster/active
+    """
+    return {
+        "roster": [
+            {
+                "person": {"id": 660271, "fullName": "Shohei Ohtani"},
+                "jerseyNumber": "17",
+                "position": {
+                    "code": "Y",
+                    "name": "Two-Way Player",
+                    "type": "Two-Way Player",
+                    "abbreviation": "TWP",
+                },
+                "status": {"code": "A", "description": "Active"},
+                "parentTeamId": 119,
+            },
+            {
+                "person": {"id": 543243, "fullName": "Test Pitcher"},
+                "jerseyNumber": "22",
+                "position": {
+                    "code": "1",
+                    "name": "Pitcher",
+                    "type": "Pitcher",
+                    "abbreviation": "P",
+                },
+                "status": {"code": "A", "description": "Active"},
+                "parentTeamId": 119,
+            },
+            {
+                "person": {"id": 592450, "fullName": "Mookie Betts"},
+                "jerseyNumber": "50",
+                "position": {
+                    "code": "6",
+                    "name": "Shortstop",
+                    "type": "Infielder",
+                    "abbreviation": "SS",
+                },
+                "status": {"code": "A", "description": "Active"},
+                "parentTeamId": 119,
+            },
+        ],
+        "teamId": 119,
+        "rosterType": "active",
+    }
+
+
 # Fixtures directory path helper
 @pytest.fixture
 def fixtures_dir() -> Path:

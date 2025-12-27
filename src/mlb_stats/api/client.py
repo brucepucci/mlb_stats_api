@@ -16,6 +16,7 @@ from mlb_stats.api.endpoints import (
     PLAY_BY_PLAY,
     PLAYER,
     PLAYERS_BATCH,
+    ROSTER_ACTIVE,
     SCHEDULE,
     TEAM,
     TEAMS,
@@ -376,3 +377,24 @@ class MLBStatsClient:
             Teams data
         """
         return self.get(TEAMS, params={"sportId": sport_id})
+
+    def get_roster(self, team_id: int, date: str) -> dict[str, Any]:
+        """Fetch active roster for a team on a specific date.
+
+        Roster data is NEVER cached as rosters can change daily
+        (call-ups, IL moves, trades).
+
+        Parameters
+        ----------
+        team_id : int
+            Team ID
+        date : str
+            Date in YYYY-MM-DD format
+
+        Returns
+        -------
+        dict
+            Roster data including player list
+        """
+        endpoint = ROSTER_ACTIVE.format(team_id=team_id)
+        return self.get(endpoint, params={"date": date})

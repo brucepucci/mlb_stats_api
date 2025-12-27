@@ -258,6 +258,36 @@ def delete_batted_balls(conn: sqlite3.Connection, gamePk: int) -> None:
     conn.execute("DELETE FROM batted_balls WHERE gamePk = ?", (gamePk,))
 
 
+def upsert_game_roster(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace game_roster record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Game roster row data
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "game_rosters", row)
+
+
+def delete_game_rosters(conn: sqlite3.Connection, gamePk: int) -> None:
+    """Delete all roster records for a game.
+
+    Used before re-inserting to ensure idempotent sync.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    gamePk : int
+        Game primary key
+    """
+    conn.execute("DELETE FROM game_rosters WHERE gamePk = ?", (gamePk,))
+
+
 def _upsert(conn: sqlite3.Connection, table: str, row: dict) -> None:
     """Generic INSERT OR REPLACE helper.
 
