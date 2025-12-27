@@ -5,6 +5,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from mlb_stats.api.client import MLBStatsClient
+from mlb_stats.collectors.venue import sync_venue
 from mlb_stats.db.queries import (
     delete_game_officials,
     upsert_game,
@@ -40,13 +41,14 @@ def sync_game(
 
     Notes
     -----
-    Extracts team data from the game feed itself, eliminating separate API calls.
+    Extracts team and venue data from the game feed itself.
     The game feed is cached for Final games.
 
     Order of operations (for foreign key compliance):
     1. Extract and sync teams from gameData.teams
-    2. Insert game
-    3. Delete then insert officials
+    2. Sync venue (fetch full details from API)
+    3. Insert game
+    4. Delete then insert officials
     """
     logger.info("Syncing game %d", game_pk)
 
@@ -81,11 +83,22 @@ def sync_game(
                 home_team_row.get("name"),
             )
 
-        # 2. Transform and upsert game
+        # 2. Sync venue (extract from game feed, fetch full details from API)
+        venue = game_data.get("venue", {})
+        venue_id = venue.get("id")
+        if venue_id:
+            try:
+                sync_venue(client, conn, venue_id)
+                logger.debug("Synced venue %s: %s", venue_id, venue.get("name"))
+            except Exception as e:
+                logger.warning("Failed to sync venue %d: %s", venue_id, e)
+                # Continue - game can still be synced with NULL venue_id
+
+        # 3. Transform and upsert game
         game_row = transform_game(game_feed, fetched_at)
         upsert_game(conn, game_row)
 
-        # 3. Delete and re-insert officials for idempotent sync
+        # 4. Delete and re-insert officials for idempotent sync
         delete_game_officials(conn, game_pk)
 
         official_rows = transform_officials(game_feed, game_pk)

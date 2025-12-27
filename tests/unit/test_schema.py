@@ -10,7 +10,7 @@ class TestCreateTables:
     """Tests for create_tables function."""
 
     def test_all_tables_created(self, temp_db: sqlite3.Connection) -> None:
-        """Test that all 11 tables plus _meta are created."""
+        """Test that all 12 tables plus _meta are created."""
         cursor = temp_db.cursor()
         cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
@@ -27,14 +27,14 @@ class TestCreateTables:
         assert version == SCHEMA_VERSION
 
     def test_table_count(self, temp_db: sqlite3.Connection) -> None:
-        """Test that exactly 12 tables are created (excluding SQLite internals)."""
+        """Test that exactly 13 tables are created (excluding SQLite internals)."""
         cursor = temp_db.cursor()
         cursor.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' "
             "AND name != 'sqlite_sequence'"
         )
         count = cursor.fetchone()[0]
-        assert count == 12  # 11 data tables + _meta
+        assert count == 13  # 12 data tables + _meta
 
     def test_indices_created(self, temp_db: sqlite3.Connection) -> None:
         """Test that indices are created."""

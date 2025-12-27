@@ -43,6 +43,46 @@ Reference table for team information. Always fetched fresh (never cached) to kee
 
 ---
 
+## venues
+
+Reference table for venue/stadium information. Always fetched fresh (never cached) to keep mutable fields current.
+
+**Source:** `/v1/venues/{venueId}?hydrate=location,fieldInfo,timezone`
+
+| Column | Type | Nullable | Source | Description |
+|--------|------|----------|--------|-------------|
+| id | INTEGER | No | `venues[0].id` | MLB venue ID (primary key) |
+| name | TEXT | No | `venues[0].name` | Stadium name (e.g., "Dodger Stadium") |
+| active | INTEGER | Yes | `venues[0].active` | 1 if active, 0 if inactive |
+| address1 | TEXT | Yes | `venues[0].location.address1` | Street address |
+| city | TEXT | Yes | `venues[0].location.city` | City |
+| state | TEXT | Yes | `venues[0].location.state` | State |
+| stateAbbrev | TEXT | Yes | `venues[0].location.stateAbbrev` | State abbreviation (e.g., "CA") |
+| postalCode | TEXT | Yes | `venues[0].location.postalCode` | Postal/ZIP code |
+| country | TEXT | Yes | `venues[0].location.country` | Country (e.g., "USA") |
+| phone | TEXT | Yes | `venues[0].location.phone` | Phone number |
+| latitude | REAL | Yes | `venues[0].location.defaultCoordinates.latitude` | Latitude |
+| longitude | REAL | Yes | `venues[0].location.defaultCoordinates.longitude` | Longitude |
+| azimuthAngle | REAL | Yes | `venues[0].location.azimuthAngle` | Field orientation (degrees) |
+| elevation | INTEGER | Yes | `venues[0].location.elevation` | Elevation (feet) |
+| timeZone_id | TEXT | Yes | `venues[0].timeZone.id` | Time zone ID (e.g., "America/Los_Angeles") |
+| timeZone_offset | INTEGER | Yes | `venues[0].timeZone.offset` | UTC offset (e.g., -8) |
+| timeZone_tz | TEXT | Yes | `venues[0].timeZone.tz` | Time zone abbreviation (e.g., "PST") |
+| capacity | INTEGER | Yes | `venues[0].fieldInfo.capacity` | Seating capacity |
+| turfType | TEXT | Yes | `venues[0].fieldInfo.turfType` | "Grass" or "Artificial Turf" |
+| roofType | TEXT | Yes | `venues[0].fieldInfo.roofType` | "Open", "Retractable", or "Dome" |
+| leftLine | INTEGER | Yes | `venues[0].fieldInfo.leftLine` | Left field line (feet) |
+| leftCenter | INTEGER | Yes | `venues[0].fieldInfo.leftCenter` | Left center (feet) |
+| center | INTEGER | Yes | `venues[0].fieldInfo.center` | Center field (feet) |
+| rightCenter | INTEGER | Yes | `venues[0].fieldInfo.rightCenter` | Right center (feet) |
+| rightLine | INTEGER | Yes | `venues[0].fieldInfo.rightLine` | Right field line (feet) |
+
+**Indices:**
+- `idx_venues_name` on `name`
+- `idx_venues_city` on `city`
+
+---
+
 ## games
 
 Core game information table. Cached only when game state is "Final".
@@ -64,7 +104,8 @@ Core game information table. Cached only when game state is "Final".
 | abstractGameState | TEXT | Yes | `gameData.status.abstractGameState` | State: Final, Live, Preview |
 | detailedState | TEXT | Yes | `gameData.status.detailedState` | Detailed state (e.g., "Final", "In Progress") |
 | statusCode | TEXT | Yes | `gameData.status.statusCode` | Status code |
-| venue_name | TEXT | Yes | `gameData.venue.name` | Venue name (denormalized) |
+| venue_id | INTEGER | Yes | `gameData.venue.id` | Venue ID (FK to venues) |
+| venue_name | TEXT | Yes | `gameData.venue.name` | Venue name (denormalized for convenience) |
 | dayNight | TEXT | Yes | `gameData.datetime.dayNight` | "day" or "night" |
 | scheduledInnings | INTEGER | Yes | `gameData.game.scheduledInnings` | Scheduled innings (usually 9) |
 | inningCount | INTEGER | Yes | `liveData.linescore.currentInning` | Actual innings played |
@@ -85,12 +126,14 @@ Core game information table. Cached only when game state is "Final".
 **Foreign Keys:**
 - `away_team_id` → `teams(id)`
 - `home_team_id` → `teams(id)`
+- `venue_id` → `venues(id)`
 
 **Indices:**
 - `idx_games_date` on `gameDate`
 - `idx_games_season` on `season`
 - `idx_games_away_team` on `away_team_id`
 - `idx_games_home_team` on `home_team_id`
+- `idx_games_venue` on `venue_id`
 
 ---
 
@@ -417,4 +460,52 @@ WHERE (g.away_team_id = 119 OR g.home_team_id = 119)
       AND gr.team_id = 119
   )
 ORDER BY g.gameDate;
+```
+
+### Get game with venue details
+```sql
+SELECT
+    g.gamePk,
+    g.gameDate,
+    away.name AS away_team,
+    home.name AS home_team,
+    v.name AS stadium,
+    v.city,
+    v.capacity,
+    v.roofType,
+    v.turfType
+FROM games g
+JOIN teams away ON g.away_team_id = away.id
+JOIN teams home ON g.home_team_id = home.id
+JOIN venues v ON g.venue_id = v.id
+WHERE g.gamePk = 745927;
+```
+
+### Games by stadium
+```sql
+SELECT
+    v.name AS stadium,
+    v.city,
+    COUNT(*) AS games
+FROM games g
+JOIN venues v ON g.venue_id = v.id
+WHERE g.gameType = 'R'
+  AND g.season = 2024
+GROUP BY v.id
+ORDER BY games DESC;
+```
+
+### Stadiums with largest dimensions
+```sql
+SELECT
+    name,
+    city,
+    center,
+    leftLine,
+    rightLine,
+    capacity
+FROM venues
+WHERE center IS NOT NULL
+ORDER BY center DESC
+LIMIT 10;
 ```

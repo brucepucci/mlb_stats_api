@@ -73,6 +73,7 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
         "abstractGameState": status.get("abstractGameState"),
         "detailedState": status.get("detailedState"),
         "statusCode": status.get("statusCode"),
+        "venue_id": venue.get("id"),
         "venue_name": venue.get("name"),
         "dayNight": datetime_info.get("dayNight"),
         "scheduledInnings": game.get("scheduledInnings"),

@@ -12,6 +12,7 @@ PLAYER = "v1/people/{person_id}"
 PLAYERS_BATCH = "v1/people"
 TEAM = "v1/teams/{team_id}"
 TEAMS = "v1/teams"
+VENUE = "v1/venues/{venue_id}"
 ROSTER_ACTIVE = "v1/teams/{team_id}/roster/active"
 
 # Cacheable endpoint types - only game data, never reference data
