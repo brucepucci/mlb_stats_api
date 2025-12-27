@@ -93,9 +93,7 @@ class TestSyncGameRosters:
         self._mock_player_api(543243, "Test Pitcher")
         self._mock_player_api(592450, "Mookie Betts")
 
-        result = sync_game_rosters(
-            mock_client, temp_db, 745927, "2024-07-01", 137, 119
-        )
+        result = sync_game_rosters(mock_client, temp_db, 745927, "2024-07-01", 137, 119)
 
         assert result is True
 
@@ -134,9 +132,7 @@ class TestSyncGameRosters:
         self._mock_player_api(543243, "Test Pitcher")
         self._mock_player_api(592450, "Mookie Betts")
 
-        result = sync_game_rosters(
-            mock_client, temp_db, 745927, "2024-07-01", 137, 119
-        )
+        result = sync_game_rosters(mock_client, temp_db, 745927, "2024-07-01", 137, 119)
 
         assert result is True
 
@@ -146,9 +142,7 @@ class TestSyncGameRosters:
         assert player_count == 3
 
         # Verify specific player data
-        cursor = temp_db.execute(
-            "SELECT fullName FROM players WHERE id = 660271"
-        )
+        cursor = temp_db.execute("SELECT fullName FROM players WHERE id = 660271")
         row = cursor.fetchone()
         assert row["fullName"] == "Shohei Ohtani"
 
@@ -311,9 +305,7 @@ class TestSyncGameRosters:
             status=200,
         )
 
-        result = sync_game_rosters(
-            mock_client, temp_db, 745927, "2024-07-01", 137, 119
-        )
+        result = sync_game_rosters(mock_client, temp_db, 745927, "2024-07-01", 137, 119)
 
         assert result is True  # Still succeeds, just logs warning
 
@@ -337,9 +329,7 @@ class TestSyncGameRosters:
             status=500,
         )
 
-        result = sync_game_rosters(
-            mock_client, temp_db, 745927, "2024-07-01", 137, 119
-        )
+        result = sync_game_rosters(mock_client, temp_db, 745927, "2024-07-01", 137, 119)
 
         assert result is False
 
@@ -436,16 +426,12 @@ class TestRosterPlayerSync:
             status=200,
         )
 
-        result = sync_game_rosters(
-            mock_client, temp_db, 745927, "2024-07-01", 137, 119
-        )
+        result = sync_game_rosters(mock_client, temp_db, 745927, "2024-07-01", 137, 119)
 
         assert result is True
 
         # Verify player was synced (this would fail before the fix)
-        cursor = temp_db.execute(
-            "SELECT fullName FROM players WHERE id = 999999"
-        )
+        cursor = temp_db.execute("SELECT fullName FROM players WHERE id = 999999")
         row = cursor.fetchone()
         assert row is not None
         assert row["fullName"] == "Bench Player"
