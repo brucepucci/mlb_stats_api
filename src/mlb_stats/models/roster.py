@@ -1,6 +1,9 @@
 """Roster data transformation functions."""
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def transform_roster(
@@ -41,6 +44,7 @@ def transform_roster(
 
         player_id = person.get("id")
         if not player_id:
+            logger.debug("Skipping roster entry without player_id: %s", player_entry)
             continue
 
         row = {
