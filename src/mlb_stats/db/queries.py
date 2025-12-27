@@ -108,6 +108,34 @@ def upsert_player(conn: sqlite3.Connection, row: dict) -> None:
     _upsert(conn, "players", row)
 
 
+def get_missing_player_ids(
+    conn: sqlite3.Connection, player_ids: list[int]
+) -> list[int]:
+    """Return player IDs that don't exist in the players table.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    player_ids : list[int]
+        List of player IDs to check
+
+    Returns
+    -------
+    list[int]
+        Player IDs not found in the database
+    """
+    if not player_ids:
+        return []
+    placeholders = ",".join("?" * len(player_ids))
+    cursor = conn.execute(
+        f"SELECT id FROM players WHERE id IN ({placeholders})",
+        tuple(player_ids),
+    )
+    existing = {row[0] for row in cursor.fetchall()}
+    return [pid for pid in player_ids if pid not in existing]
+
+
 def upsert_game_batting(conn: sqlite3.Connection, row: dict) -> None:
     """Insert or replace game_batting record with write metadata.
 

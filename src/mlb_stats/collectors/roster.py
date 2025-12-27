@@ -6,7 +6,11 @@ from datetime import datetime, timezone
 
 from mlb_stats.api.client import MLBStatsClient
 from mlb_stats.collectors.player import sync_player
-from mlb_stats.db.queries import delete_game_rosters, upsert_game_roster
+from mlb_stats.db.queries import (
+    delete_game_rosters,
+    get_missing_player_ids,
+    upsert_game_roster,
+)
 from mlb_stats.models.roster import extract_roster_player_ids, transform_roster
 
 logger = logging.getLogger(__name__)
@@ -57,10 +61,11 @@ def sync_game_rosters(
         for team_id in [away_team_id, home_team_id]:
             roster_data = client.get_roster(team_id, game_date)
 
-            # Sync players BEFORE inserting roster rows (FK compliance)
-            # Players on roster may not appear in boxscore (bench players)
+            # Sync only players not already in DB (FK compliance)
+            # Most players already synced from game feed; only bench players need API calls
             roster_player_ids = extract_roster_player_ids(roster_data)
-            for player_id in roster_player_ids:
+            missing_player_ids = get_missing_player_ids(conn, roster_player_ids)
+            for player_id in missing_player_ids:
                 sync_player(client, conn, player_id)
                 total_players_synced += 1
 
