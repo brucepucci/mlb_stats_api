@@ -188,9 +188,14 @@ def sync_boxscore(
         home_team_id = teams.get("home", {}).get("team", {}).get("id")
 
         if game_date and away_team_id and home_team_id:
-            sync_game_rosters(
+            roster_success = sync_game_rosters(
                 client, conn, game_pk, game_date, away_team_id, home_team_id
             )
+            if not roster_success:
+                logger.warning(
+                    "Roster sync failed for game %d, boxscore sync continuing",
+                    game_pk,
+                )
         else:
             logger.warning(
                 "Missing data for roster sync (game %d): date=%s, away=%s, home=%s",

@@ -26,10 +26,10 @@ A Python CLI application that collects MLB game data from the MLB Stats API and 
 | Metadata columns | Underscore prefix | `_written_at`, `_git_hash`, `_version`, `_fetched_at` |
 | Flattened nested objects | Underscore separator | `primaryPosition.code` → `primaryPosition_code` |
 
-## Database Schema (11 Tables)
+## Database Schema (12 Tables)
 
 **Reference tables:** `teams`, `players`
-**Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`
+**Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`, `game_rosters`
 **Pitch-level tables:** `pitches`, `at_bats`, `batted_balls`
 **Operational:** `sync_log`, `_meta`
 
