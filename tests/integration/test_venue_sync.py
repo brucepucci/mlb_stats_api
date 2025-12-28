@@ -1,6 +1,5 @@
 """Integration tests for venue sync functionality."""
 
-import json
 import sqlite3
 from datetime import datetime, timezone
 
@@ -78,9 +77,7 @@ class TestSyncVenue:
         assert count == 2
 
         # Verify both years are present
-        cursor = temp_db.execute(
-            "SELECT year FROM venues WHERE id = 22 ORDER BY year"
-        )
+        cursor = temp_db.execute("SELECT year FROM venues WHERE id = 22 ORDER BY year")
         years = [row["year"] for row in cursor.fetchall()]
         assert years == [CURRENT_YEAR, CURRENT_YEAR + 1]
 

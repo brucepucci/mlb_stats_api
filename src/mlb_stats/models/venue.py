@@ -86,7 +86,9 @@ def transform_venue(api_response: dict, fetched_at: str, year: int) -> dict:
     return _transform_venue_data(venue, fetched_at, year)
 
 
-def transform_venue_from_game_feed(venue_data: dict, fetched_at: str, year: int) -> dict:
+def transform_venue_from_game_feed(
+    venue_data: dict, fetched_at: str, year: int
+) -> dict:
     """Transform venue data from game feed to database row.
 
     Parameters

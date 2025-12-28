@@ -123,7 +123,9 @@ class TestTransformVenueFromGameFeed:
             "timeZone": {"id": "America/Los_Angeles"},
         }
 
-        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z", TEST_YEAR)
+        result = transform_venue_from_game_feed(
+            venue_data, "2024-07-01T00:00:00Z", TEST_YEAR
+        )
 
         assert result["id"] == 22
         assert result["year"] == TEST_YEAR
@@ -142,7 +144,9 @@ class TestTransformVenueFromGameFeed:
             "name": "Dodger Stadium",
         }
 
-        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z", TEST_YEAR)
+        result = transform_venue_from_game_feed(
+            venue_data, "2024-07-01T00:00:00Z", TEST_YEAR
+        )
 
         assert result["id"] == 22
         assert result["year"] == TEST_YEAR
