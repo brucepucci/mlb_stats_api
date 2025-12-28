@@ -93,7 +93,10 @@ def sample_game_feed() -> dict:
         "gamePk": 745927,
         "gameData": {
             "game": {"pk": 745927, "type": "R", "season": "2024"},
-            "datetime": {"dateTime": "2024-07-02T02:10:00Z"},
+            "datetime": {
+                "dateTime": "2024-07-02T02:10:00Z",
+                "officialDate": "2024-07-01",
+            },
             "status": {"abstractGameState": "Final", "detailedState": "Final"},
             "teams": {
                 "away": {
@@ -452,6 +455,58 @@ def sample_team() -> dict:
                 "league": {"id": 104, "name": "National League"},
                 "division": {"id": 203, "name": "National League West"},
                 "venue": {"id": 22, "name": "Dodger Stadium"},
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def sample_venue() -> dict:
+    """Sample venue response for testing.
+
+    Returns
+    -------
+    dict
+        Venue structure from /v1/venues/{venueId}?hydrate=location,fieldInfo,timezone
+    """
+    return {
+        "venues": [
+            {
+                "id": 22,
+                "name": "Dodger Stadium",
+                "link": "/api/v1/venues/22",
+                "active": True,
+                "season": "2024",
+                "location": {
+                    "address1": "1000 Vin Scully Avenue",
+                    "city": "Los Angeles",
+                    "state": "California",
+                    "stateAbbrev": "CA",
+                    "postalCode": "90012-1199",
+                    "country": "USA",
+                    "phone": "(323) 224-1500",
+                    "defaultCoordinates": {
+                        "latitude": 34.07368,
+                        "longitude": -118.24053,
+                    },
+                    "azimuthAngle": 26.0,
+                    "elevation": 515,
+                },
+                "timeZone": {
+                    "tz": "PST",
+                    "id": "America/Los_Angeles",
+                    "offset": -8,
+                },
+                "fieldInfo": {
+                    "capacity": 56000,
+                    "turfType": "Grass",
+                    "roofType": "Open",
+                    "leftLine": 330,
+                    "leftCenter": 385,
+                    "center": 395,
+                    "rightCenter": 385,
+                    "rightLine": 330,
+                },
             }
         ]
     }

@@ -37,6 +37,7 @@ Game type codes:
 |-------|-----------|-------------|
 | games | 51,574 | Game metadata (2008-2025) |
 | teams | 136 | Team reference data (including historical) |
+| venues | ~30 | Stadium data with dimensions and location |
 | players | 19,401 | Player biographical data |
 | game_batting | 1,329,168 | Per-player batting stats per game |
 | game_pitching | 454,620 | Per-player pitching stats per game |
@@ -84,6 +85,8 @@ teams (id) ←──┬── players (currentTeam_id)
               ├── game_pitching (team_id)
               └── game_rosters (team_id)
 
+venues (id, year) ←── games (venue_id, season)
+
 players (id) ←──┬── game_batting (player_id)
                 ├── game_pitching (player_id)
                 ├── game_rosters (player_id)
@@ -121,7 +124,36 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | division_name | TEXT | Full division name |
 | active | INTEGER | 1=active, 0=inactive |
 
-### 2. `players` - Player Biographical Data
+### 2. `venues` - Stadium Data (Per-Year)
+
+Venues are stored per-year to track changes between seasons (renovations, capacity changes, dimension adjustments).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | MLB venue ID (COMPOSITE PRIMARY KEY with year) |
+| year | INTEGER | Year this data applies to (COMPOSITE PRIMARY KEY with id) |
+| name | TEXT | Stadium name ("Dodger Stadium") |
+| city | TEXT | City |
+| state | TEXT | State |
+| stateAbbrev | TEXT | State abbreviation ("CA") |
+| country | TEXT | Country |
+| latitude | REAL | GPS latitude |
+| longitude | REAL | GPS longitude |
+| elevation | INTEGER | Feet above sea level |
+| capacity | INTEGER | Seating capacity |
+| turfType | TEXT | "Grass" or "Artificial Turf" |
+| roofType | TEXT | "Open", "Retractable", "Dome" |
+| leftLine | INTEGER | Left field line (feet) |
+| leftCenter | INTEGER | Left-center (feet) |
+| center | INTEGER | Center field (feet) |
+| rightCenter | INTEGER | Right-center (feet) |
+| rightLine | INTEGER | Right field line (feet) |
+| timeZone_id | TEXT | Time zone ("America/Los_Angeles") |
+| timeZone_offset | INTEGER | UTC offset (-8) |
+
+**PRIMARY KEY:** (id, year)
+
+### 3. `players` - Player Biographical Data
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -144,7 +176,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | active | INTEGER | 1=active, 0=inactive |
 | currentTeam_id | INTEGER | FK to teams.id |
 
-### 3. `games` - Game Metadata
+### 4. `games` - Game Metadata
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -158,7 +190,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | away_score | INTEGER | Final away score |
 | home_score | INTEGER | Final home score |
 | abstractGameState | TEXT | 'Final', 'Live', 'Preview' |
-| venue_name | TEXT | Stadium name |
+| venue_id | INTEGER | FK to venues(id, year) with season |
 | dayNight | TEXT | 'day' or 'night' |
 | weather_condition | TEXT | "Clear", "Cloudy", etc. |
 | weather_temp | TEXT | Temperature |
@@ -169,7 +201,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | umpire_HP_id | INTEGER | Home plate umpire ID |
 | umpire_HP_name | TEXT | Home plate umpire name |
 
-### 4. `game_batting` - Per-Game Batting Stats
+### 5. `game_batting` - Per-Game Batting Stats
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -200,7 +232,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 **UNIQUE:** (gamePk, player_id)
 
-### 5. `game_pitching` - Per-Game Pitching Stats
+### 6. `game_pitching` - Per-Game Pitching Stats
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -237,7 +269,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 **NOTE:** To identify starters, use `WHERE pitchingOrder = 1` (more reliable than isStartingPitcher)
 
-### 6. `at_bats` - Plate Appearance Summaries
+### 7. `at_bats` - Plate Appearance Summaries
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -263,7 +295,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 **UNIQUE:** (gamePk, atBatIndex)
 
-### 7. `pitches` - Individual Pitch Data (Statcast)
+### 8. `pitches` - Individual Pitch Data (Statcast)
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -313,7 +345,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 **UNIQUE:** (gamePk, atBatIndex, pitchNumber)
 
-### 8. `batted_balls` - Balls in Play (Statcast)
+### 9. `batted_balls` - Balls in Play (Statcast)
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -342,7 +374,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 
 **UNIQUE:** (gamePk, atBatIndex, pitchNumber)
 
-### 9. `game_officials` - Umpires
+### 10. `game_officials` - Umpires
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -351,7 +383,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | official_fullName | TEXT | Umpire name |
 | officialType | TEXT | "Home Plate", "First Base", "Second Base", "Third Base" |
 
-### 10. `game_rosters` - Active Roster Per Game
+### 11. `game_rosters` - Active Roster Per Game
 
 Tracks which players were on each team's active 26-man roster for each game. Players absent from the roster were on IL/DL.
 

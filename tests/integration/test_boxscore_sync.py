@@ -19,6 +19,7 @@ class TestSyncBoxscore:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that sync_boxscore creates batting/pitching records."""
         # Mock game feed (has teams and players)
@@ -26,6 +27,14 @@ class TestSyncBoxscore:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        # Mock venue API call
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -71,12 +80,20 @@ class TestSyncBoxscore:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that empty boxscore returns False."""
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -98,12 +115,20 @@ class TestSyncBoxscore:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that batting records have correct data."""
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -139,12 +164,20 @@ class TestSyncBoxscore:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that pitching records have correct data."""
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -179,12 +212,20 @@ class TestSyncBoxscore:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that batting/pitching records include write metadata."""
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -230,12 +271,20 @@ class TestSyncBoxscore:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that player data is correctly extracted from game feed."""
         responses.add(
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -271,6 +320,7 @@ class TestIdempotentBoxscoreSync:
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that re-syncing boxscore doesn't create duplicates."""
         # Mock endpoints twice
@@ -279,6 +329,12 @@ class TestIdempotentBoxscoreSync:
                 responses.GET,
                 f"{BASE_URL}v1.1/game/745927/feed/live",
                 json=sample_game_feed,
+                status=200,
+            )
+            responses.add(
+                responses.GET,
+                f"{BASE_URL}v1/venues/22",
+                json=sample_venue,
                 status=200,
             )
             responses.add(
@@ -318,6 +374,7 @@ class TestSyncBoxscoresForDateRange:
         sample_schedule: dict,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that schedule API is used when no games in database."""
         # Mock schedule
@@ -333,6 +390,14 @@ class TestSyncBoxscoresForDateRange:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        # Mock venue
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -386,6 +451,7 @@ class TestSyncBoxscoresForDateRange:
         sample_schedule: dict,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that progress callback is invoked."""
         responses.add(
@@ -399,6 +465,13 @@ class TestSyncBoxscoresForDateRange:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -433,6 +506,7 @@ class TestSyncBoxscoresForDateRange:
         sample_schedule: dict,
         sample_game_feed: dict,
         sample_boxscore: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that force_refresh=True always fetches from schedule API."""
         # First sync without force_refresh to populate DB
@@ -446,6 +520,12 @@ class TestSyncBoxscoresForDateRange:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
         responses.add(
@@ -471,6 +551,12 @@ class TestSyncBoxscoresForDateRange:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
         responses.add(

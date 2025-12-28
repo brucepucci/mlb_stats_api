@@ -151,10 +151,12 @@ class TestSyncGame:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
+        sample_venue: dict,
     ) -> None:
-        """Test that sync_game creates game with team references.
+        """Test that sync_game creates game with team and venue references.
 
         Teams are extracted from the game feed itself, eliminating separate API calls.
+        Venue is fetched from the API for full details.
         """
         # Mock game feed (contains teams and players)
         responses.add(
@@ -163,18 +165,33 @@ class TestSyncGame:
             json=sample_game_feed,
             status=200,
         )
+        # Mock venue API call
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
+            status=200,
+        )
 
         result = sync_game(mock_client, temp_db, 745927)
 
         assert result is True
 
         # Verify game inserted
-        cursor = temp_db.execute("SELECT gamePk FROM games WHERE gamePk = 745927")
-        assert cursor.fetchone() is not None
+        cursor = temp_db.execute(
+            "SELECT gamePk, venue_id FROM games WHERE gamePk = 745927"
+        )
+        row = cursor.fetchone()
+        assert row is not None
+        assert row["venue_id"] == 22
 
         # Verify teams inserted as side effect (extracted from game feed)
         cursor = temp_db.execute("SELECT COUNT(*) FROM teams")
         assert cursor.fetchone()[0] == 2
+
+        # Verify venue inserted
+        cursor = temp_db.execute("SELECT name FROM venues WHERE id = 22")
+        assert cursor.fetchone()["name"] == "Dodger Stadium"
 
     @responses.activate
     def test_game_includes_write_metadata(
@@ -182,6 +199,7 @@ class TestSyncGame:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that synced game includes write metadata."""
         # Mock game feed (contains teams and players)
@@ -189,6 +207,13 @@ class TestSyncGame:
             responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+        # Mock venue API call
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 
@@ -213,6 +238,7 @@ class TestIdempotentSync:
         temp_db: sqlite3.Connection,
         mock_client: MLBStatsClient,
         sample_game_feed: dict,
+        sample_venue: dict,
     ) -> None:
         """Test that re-syncing updates _written_at timestamp."""
         # Mock game feed (twice - once for each sync)
@@ -224,8 +250,20 @@ class TestIdempotentSync:
         )
         responses.add(
             responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
             f"{BASE_URL}v1.1/game/745927/feed/live",
             json=sample_game_feed,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{BASE_URL}v1/venues/22",
+            json=sample_venue,
             status=200,
         )
 

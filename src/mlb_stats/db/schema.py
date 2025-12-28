@@ -1,12 +1,12 @@
 """Database schema for MLB Stats Collector.
 
-All 11 tables with exact MLB field names as specified in PROJECT_PLAN.md.
+All 13 tables with exact MLB field names as specified in PROJECT_PLAN.md.
 Metadata columns are prefixed with underscore (_written_at, _git_hash, _version).
 """
 
 import sqlite3
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.2.0"
 
 # SQL statements for each table
 # Note: MLB field names are preserved exactly (gamePk, fullName, strikeOuts, etc.)
@@ -42,6 +42,62 @@ CREATE TABLE IF NOT EXISTS teams (
     _git_hash TEXT NOT NULL,
     _version TEXT NOT NULL
 );
+"""
+
+
+CREATE_VENUES_TABLE = """
+CREATE TABLE IF NOT EXISTS venues (
+    id INTEGER NOT NULL,                 -- MLB venueId
+    year INTEGER NOT NULL,               -- Year this venue data applies to
+    name TEXT NOT NULL,                  -- "Dodger Stadium"
+    active INTEGER,                      -- 1 or 0
+
+    -- Location
+    address1 TEXT,
+    city TEXT,
+    state TEXT,
+    stateAbbrev TEXT,
+    postalCode TEXT,
+    country TEXT,
+    phone TEXT,
+    latitude REAL,                       -- location.defaultCoordinates.latitude
+    longitude REAL,                      -- location.defaultCoordinates.longitude
+    azimuthAngle REAL,                   -- Field orientation in degrees
+    elevation INTEGER,                   -- Feet above sea level
+
+    -- Time zone
+    timeZone_id TEXT,                    -- "America/Los_Angeles"
+    timeZone_offset INTEGER,             -- UTC offset (e.g., -8)
+    timeZone_tz TEXT,                    -- "PST"
+
+    -- Field info
+    capacity INTEGER,                    -- Seating capacity
+    turfType TEXT,                       -- "Grass", "Artificial Turf"
+    roofType TEXT,                       -- "Open", "Retractable", "Dome"
+
+    -- Field dimensions (feet from home plate)
+    leftLine INTEGER,
+    leftCenter INTEGER,
+    center INTEGER,
+    rightCenter INTEGER,
+    rightLine INTEGER,
+
+    -- API fetch metadata
+    _fetched_at TEXT NOT NULL,
+
+    -- Write metadata (provenance)
+    _written_at TEXT NOT NULL,
+    _git_hash TEXT NOT NULL,
+    _version TEXT NOT NULL,
+
+    PRIMARY KEY (id, year)
+);
+"""
+
+CREATE_VENUES_INDICES = """
+CREATE INDEX IF NOT EXISTS idx_venues_name ON venues(name);
+CREATE INDEX IF NOT EXISTS idx_venues_city ON venues(city);
+CREATE INDEX IF NOT EXISTS idx_venues_year ON venues(year);
 """
 
 
@@ -123,8 +179,8 @@ CREATE TABLE IF NOT EXISTS games (
     detailedState TEXT,                  -- 'Final', 'In Progress', etc.
     statusCode TEXT,
 
-    -- Venue (denormalized, no venues table)
-    venue_name TEXT,
+    -- Venue
+    venue_id INTEGER,                    -- FK to venues(id, year) with season
 
     -- Game details
     dayNight TEXT,                       -- 'day', 'night'
@@ -165,7 +221,8 @@ CREATE TABLE IF NOT EXISTS games (
     _version TEXT NOT NULL,
 
     FOREIGN KEY (away_team_id) REFERENCES teams(id),
-    FOREIGN KEY (home_team_id) REFERENCES teams(id)
+    FOREIGN KEY (home_team_id) REFERENCES teams(id),
+    FOREIGN KEY (venue_id, season) REFERENCES venues(id, year)
 );
 """
 
@@ -174,6 +231,8 @@ CREATE INDEX IF NOT EXISTS idx_games_date ON games(gameDate);
 CREATE INDEX IF NOT EXISTS idx_games_season ON games(season);
 CREATE INDEX IF NOT EXISTS idx_games_away_team ON games(away_team_id);
 CREATE INDEX IF NOT EXISTS idx_games_home_team ON games(home_team_id);
+CREATE INDEX IF NOT EXISTS idx_games_venue ON games(venue_id);
+CREATE INDEX IF NOT EXISTS idx_games_venue_season ON games(venue_id, season);
 """
 
 CREATE_GAME_OFFICIALS_TABLE = """
@@ -672,7 +731,7 @@ CREATE INDEX IF NOT EXISTS idx_sync_log_status ON sync_log(status);
 def create_tables(conn: sqlite3.Connection) -> None:
     """Create all database tables.
 
-    Creates all 11 tables with their indices. Tables are created in order
+    Creates all 13 tables with their indices. Tables are created in order
     to satisfy foreign key dependencies.
 
     Parameters
@@ -689,42 +748,46 @@ def create_tables(conn: sqlite3.Connection) -> None:
     # 2. teams (no dependencies)
     cursor.execute(CREATE_TEAMS_TABLE)
 
-    # 3. players (depends on teams)
+    # 3. venues (no dependencies)
+    cursor.execute(CREATE_VENUES_TABLE)
+    cursor.executescript(CREATE_VENUES_INDICES)
+
+    # 4. players (depends on teams)
     cursor.execute(CREATE_PLAYERS_TABLE)
 
-    # 4. games (depends on teams)
+    # 5. games (depends on teams, venues)
     cursor.execute(CREATE_GAMES_TABLE)
     cursor.executescript(CREATE_GAMES_INDICES)
 
-    # 5. game_officials (depends on games)
+    # 6. game_officials (depends on games)
     cursor.execute(CREATE_GAME_OFFICIALS_TABLE)
     cursor.executescript(CREATE_GAME_OFFICIALS_INDICES)
 
-    # 6. game_batting (depends on games, players, teams)
+    # 7. game_batting (depends on games, players, teams)
     cursor.execute(CREATE_GAME_BATTING_TABLE)
     cursor.executescript(CREATE_GAME_BATTING_INDICES)
 
-    # 7. game_pitching (depends on games, players, teams)
+    # 8. game_pitching (depends on games, players, teams)
     cursor.execute(CREATE_GAME_PITCHING_TABLE)
     cursor.executescript(CREATE_GAME_PITCHING_INDICES)
 
-    # 8. at_bats (depends on games, players)
+    # 9. at_bats (depends on games, players)
     cursor.execute(CREATE_AT_BATS_TABLE)
     cursor.executescript(CREATE_AT_BATS_INDICES)
 
-    # 9. pitches (depends on games, players)
+    # 10. pitches (depends on games, players)
     cursor.execute(CREATE_PITCHES_TABLE)
     cursor.executescript(CREATE_PITCHES_INDICES)
 
-    # 10. batted_balls (depends on games, players, pitches)
+    # 11. batted_balls (depends on games, players, pitches)
     cursor.execute(CREATE_BATTED_BALLS_TABLE)
     cursor.executescript(CREATE_BATTED_BALLS_INDICES)
 
-    # 11. game_rosters (depends on games, teams, players)
+    # 12. game_rosters (depends on games, teams, players)
     cursor.execute(CREATE_GAME_ROSTERS_TABLE)
     cursor.executescript(CREATE_GAME_ROSTERS_INDICES)
 
-    # 12. sync_log (no dependencies)
+    # 13. sync_log (no dependencies)
     cursor.execute(CREATE_SYNC_LOG_TABLE)
     cursor.executescript(CREATE_SYNC_LOG_INDICES)
 
@@ -742,6 +805,7 @@ def get_table_names() -> list[str]:
     return [
         "_meta",
         "teams",
+        "venues",
         "players",
         "games",
         "game_officials",

@@ -88,6 +88,7 @@ for player_id in boxscore_player_ids:
 | Schedule | No | Can change |
 | Players | **No** | Mutable fields |
 | Teams | **No** | Mutable fields |
+| Venues | **Per-year** | Semi-static; tracked per season for renovations |
 
 ## Implementation Phases
 
@@ -146,7 +147,7 @@ Base URL: `https://statsapi.mlb.com/api/`
 
 1. **Don't rename MLB fields** - Keep `gamePk`, not `game_pk`
 2. **Don't check before insert** - Just upsert, let the database handle it
-3. **Don't cache reference data** - Always fetch fresh
+3. **Don't cache reference data** - Always fetch fresh (exception: venues cached per-year)
 4. **Don't use pandas** - Keep dependencies minimal
 5. **Don't swallow errors** - Log them, handle them, but don't hide them
 6. **Don't assume Statcast data exists** - Pre-2015 games won't have it

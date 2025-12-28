@@ -20,6 +20,49 @@ def upsert_team(conn: sqlite3.Connection, row: dict) -> None:
     _upsert(conn, "teams", row)
 
 
+def upsert_venue(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert or replace venue record with write metadata.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    row : dict
+        Venue row data (must include all required columns)
+    """
+    row = row.copy()
+    row.update(get_write_metadata())
+    _upsert(conn, "venues", row)
+
+
+def venue_needs_refresh(conn: sqlite3.Connection, venue_id: int, year: int) -> bool:
+    """Check if venue needs to be fetched from API.
+
+    Returns True if venue doesn't exist in DB for the given year.
+    Venues are stored per-year (composite PK of id, year) to track
+    changes between seasons (renovations, capacity changes, etc.).
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection
+    venue_id : int
+        MLB venue ID
+    year : int
+        Year to check for venue data
+
+    Returns
+    -------
+    bool
+        True if venue should be fetched, False if data exists for this year
+    """
+    cursor = conn.execute(
+        "SELECT 1 FROM venues WHERE id = ? AND year = ?",
+        (venue_id, year),
+    )
+    return cursor.fetchone() is None
+
+
 def upsert_game(conn: sqlite3.Connection, row: dict) -> None:
     """Insert or replace game record with write metadata.
 
