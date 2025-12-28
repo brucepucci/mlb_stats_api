@@ -27,7 +27,11 @@ def _transform_venue_data(venue: dict, fetched_at: str, year: int) -> dict:
         "id": venue.get("id"),
         "year": year,
         "name": venue.get("name"),
-        "active": 1 if venue.get("active") else 0,
+        "active": (
+            1
+            if venue.get("active") is True
+            else (0 if venue.get("active") is False else None)
+        ),
         # Location
         "address1": location.get("address1"),
         "city": location.get("city"),

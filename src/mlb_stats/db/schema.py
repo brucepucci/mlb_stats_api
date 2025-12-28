@@ -232,6 +232,7 @@ CREATE INDEX IF NOT EXISTS idx_games_season ON games(season);
 CREATE INDEX IF NOT EXISTS idx_games_away_team ON games(away_team_id);
 CREATE INDEX IF NOT EXISTS idx_games_home_team ON games(home_team_id);
 CREATE INDEX IF NOT EXISTS idx_games_venue ON games(venue_id);
+CREATE INDEX IF NOT EXISTS idx_games_venue_season ON games(venue_id, season);
 """
 
 CREATE_GAME_OFFICIALS_TABLE = """
