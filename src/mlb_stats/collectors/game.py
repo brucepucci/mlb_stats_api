@@ -84,15 +84,25 @@ def sync_game(
             )
 
         # 2. Sync venue (extract from game feed, fetch full details from API)
+        # Extract game year from officialDate (required for venues composite PK)
+        game_date = game_data.get("datetime", {}).get("officialDate", "")
+        game_year = int(game_date[:4]) if len(game_date) >= 4 else None
+
         venue = game_data.get("venue", {})
         venue_id = venue.get("id")
-        if venue_id:
+        if venue_id and game_year:
             try:
-                sync_venue(client, conn, venue_id)
+                sync_venue(client, conn, venue_id, game_year)
                 logger.debug("Synced venue %s: %s", venue_id, venue.get("name"))
             except Exception as e:
                 logger.warning("Failed to sync venue %d: %s", venue_id, e)
                 # Continue - game can still be synced with NULL venue_id
+        elif venue_id and not game_year:
+            logger.warning(
+                "Cannot sync venue %d - game year could not be determined from date: %s",
+                venue_id,
+                game_date,
+            )
 
         # 3. Transform and upsert game
         game_row = transform_game(game_feed, fetched_at)

@@ -45,13 +45,14 @@ Reference table for team information. Always fetched fresh (never cached) to kee
 
 ## venues
 
-Reference table for venue/stadium information. Always fetched fresh (never cached) to keep mutable fields current.
+Reference table for venue/stadium information. Stored per-year to track changes between seasons (renovations, capacity changes, dimension adjustments).
 
 **Source:** `/v1/venues/{venueId}?hydrate=location,fieldInfo,timezone`
 
 | Column | Type | Nullable | Source | Description |
 |--------|------|----------|--------|-------------|
-| id | INTEGER | No | `venues[0].id` | MLB venue ID (primary key) |
+| id | INTEGER | No | `venues[0].id` | MLB venue ID (composite PK with year) |
+| year | INTEGER | No | game year | Year this data applies to (composite PK with id) |
 | name | TEXT | No | `venues[0].name` | Stadium name (e.g., "Dodger Stadium") |
 | active | INTEGER | Yes | `venues[0].active` | 1 if active, 0 if inactive |
 | address1 | TEXT | Yes | `venues[0].location.address1` | Street address |
@@ -77,9 +78,12 @@ Reference table for venue/stadium information. Always fetched fresh (never cache
 | rightCenter | INTEGER | Yes | `venues[0].fieldInfo.rightCenter` | Right center (feet) |
 | rightLine | INTEGER | Yes | `venues[0].fieldInfo.rightLine` | Right field line (feet) |
 
+**Primary Key:** (id, year)
+
 **Indices:**
 - `idx_venues_name` on `name`
 - `idx_venues_city` on `city`
+- `idx_venues_year` on `year`
 
 ---
 
@@ -104,8 +108,7 @@ Core game information table. Cached only when game state is "Final".
 | abstractGameState | TEXT | Yes | `gameData.status.abstractGameState` | State: Final, Live, Preview |
 | detailedState | TEXT | Yes | `gameData.status.detailedState` | Detailed state (e.g., "Final", "In Progress") |
 | statusCode | TEXT | Yes | `gameData.status.statusCode` | Status code |
-| venue_id | INTEGER | Yes | `gameData.venue.id` | Venue ID (FK to venues) |
-| venue_name | TEXT | Yes | `gameData.venue.name` | Venue name (denormalized for convenience) |
+| venue_id | INTEGER | Yes | `gameData.venue.id` | Venue ID (FK to venues with season) |
 | dayNight | TEXT | Yes | `gameData.datetime.dayNight` | "day" or "night" |
 | scheduledInnings | INTEGER | Yes | `gameData.game.scheduledInnings` | Scheduled innings (usually 9) |
 | inningCount | INTEGER | Yes | `liveData.linescore.currentInning` | Actual innings played |
@@ -126,7 +129,7 @@ Core game information table. Cached only when game state is "Final".
 **Foreign Keys:**
 - `away_team_id` → `teams(id)`
 - `home_team_id` → `teams(id)`
-- `venue_id` → `venues(id)`
+- `(venue_id, season)` → `venues(id, year)`
 
 **Indices:**
 - `idx_games_date` on `gameDate`

@@ -1,7 +1,7 @@
 """Venue data transformation functions."""
 
 
-def _transform_venue_data(venue: dict, fetched_at: str) -> dict:
+def _transform_venue_data(venue: dict, fetched_at: str, year: int) -> dict:
     """Transform raw venue data to database row.
 
     Parameters
@@ -10,6 +10,8 @@ def _transform_venue_data(venue: dict, fetched_at: str) -> dict:
         Raw venue data (from API response or game feed)
     fetched_at : str
         ISO8601 timestamp when data was fetched
+    year : int
+        Year this venue data applies to (for composite PK)
 
     Returns
     -------
@@ -23,6 +25,7 @@ def _transform_venue_data(venue: dict, fetched_at: str) -> dict:
 
     return {
         "id": venue.get("id"),
+        "year": year,
         "name": venue.get("name"),
         "active": 1 if venue.get("active") else 0,
         # Location
@@ -56,7 +59,7 @@ def _transform_venue_data(venue: dict, fetched_at: str) -> dict:
     }
 
 
-def transform_venue(api_response: dict, fetched_at: str) -> dict:
+def transform_venue(api_response: dict, fetched_at: str, year: int) -> dict:
     """Transform API venue response to database row.
 
     Parameters
@@ -65,6 +68,8 @@ def transform_venue(api_response: dict, fetched_at: str) -> dict:
         Raw API response from /v1/venues/{venueId}
     fetched_at : str
         ISO8601 timestamp when data was fetched
+    year : int
+        Year this venue data applies to (for composite PK)
 
     Returns
     -------
@@ -78,10 +83,10 @@ def transform_venue(api_response: dict, fetched_at: str) -> dict:
     """
     venues = api_response.get("venues", [])
     venue = venues[0] if venues else {}
-    return _transform_venue_data(venue, fetched_at)
+    return _transform_venue_data(venue, fetched_at, year)
 
 
-def transform_venue_from_game_feed(venue_data: dict, fetched_at: str) -> dict:
+def transform_venue_from_game_feed(venue_data: dict, fetched_at: str, year: int) -> dict:
     """Transform venue data from game feed to database row.
 
     Parameters
@@ -90,6 +95,8 @@ def transform_venue_from_game_feed(venue_data: dict, fetched_at: str) -> dict:
         Venue data from gameData.venue
     fetched_at : str
         ISO8601 timestamp when data was fetched
+    year : int
+        Year this venue data applies to (for composite PK)
 
     Returns
     -------
@@ -101,4 +108,4 @@ def transform_venue_from_game_feed(venue_data: dict, fetched_at: str) -> dict:
     Game feed venue data may not include all fields (especially fieldInfo).
     Missing fields will be None.
     """
-    return _transform_venue_data(venue_data, fetched_at)
+    return _transform_venue_data(venue_data, fetched_at, year)

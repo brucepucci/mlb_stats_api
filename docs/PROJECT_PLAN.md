@@ -554,9 +554,9 @@ CREATE TABLE games (
     detailedState TEXT,                  -- 'Final', 'In Progress', etc.
     statusCode TEXT,
 
-    -- Venue (denormalized, no venues table)
-    venue_name TEXT,
-    
+    -- Venue (FK to venues table with composite key)
+    venue_id INTEGER,                    -- FK to venues(id, year) with season
+
     -- Game details
     dayNight TEXT,                       -- 'day', 'night'
     scheduledInnings INTEGER,

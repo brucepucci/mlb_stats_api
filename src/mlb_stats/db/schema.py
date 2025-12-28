@@ -6,7 +6,7 @@ Metadata columns are prefixed with underscore (_written_at, _git_hash, _version)
 
 import sqlite3
 
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
 
 # SQL statements for each table
 # Note: MLB field names are preserved exactly (gamePk, fullName, strikeOuts, etc.)
@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS teams (
 
 CREATE_VENUES_TABLE = """
 CREATE TABLE IF NOT EXISTS venues (
-    id INTEGER PRIMARY KEY,              -- MLB venueId
+    id INTEGER NOT NULL,                 -- MLB venueId
+    year INTEGER NOT NULL,               -- Year this venue data applies to
     name TEXT NOT NULL,                  -- "Dodger Stadium"
     active INTEGER,                      -- 1 or 0
 
@@ -87,13 +88,16 @@ CREATE TABLE IF NOT EXISTS venues (
     -- Write metadata (provenance)
     _written_at TEXT NOT NULL,
     _git_hash TEXT NOT NULL,
-    _version TEXT NOT NULL
+    _version TEXT NOT NULL,
+
+    PRIMARY KEY (id, year)
 );
 """
 
 CREATE_VENUES_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_venues_name ON venues(name);
 CREATE INDEX IF NOT EXISTS idx_venues_city ON venues(city);
+CREATE INDEX IF NOT EXISTS idx_venues_year ON venues(year);
 """
 
 
@@ -176,8 +180,7 @@ CREATE TABLE IF NOT EXISTS games (
     statusCode TEXT,
 
     -- Venue
-    venue_id INTEGER,                    -- FK to venues.id
-    venue_name TEXT,                     -- Kept for convenience/denormalized
+    venue_id INTEGER,                    -- FK to venues(id, year) with season
 
     -- Game details
     dayNight TEXT,                       -- 'day', 'night'
@@ -219,7 +222,7 @@ CREATE TABLE IF NOT EXISTS games (
 
     FOREIGN KEY (away_team_id) REFERENCES teams(id),
     FOREIGN KEY (home_team_id) REFERENCES teams(id),
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
+    FOREIGN KEY (venue_id, season) REFERENCES venues(id, year)
 );
 """
 

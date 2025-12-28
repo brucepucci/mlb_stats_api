@@ -5,15 +5,19 @@ from pathlib import Path
 
 from mlb_stats.models.venue import transform_venue, transform_venue_from_game_feed
 
+# Test year for venue composite PK
+TEST_YEAR = 2024
+
 
 class TestTransformVenue:
     """Tests for transform_venue function."""
 
     def test_complete_data(self, sample_venue: dict) -> None:
         """Test transformation with complete venue data."""
-        result = transform_venue(sample_venue, "2024-07-01T00:00:00Z")
+        result = transform_venue(sample_venue, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] == 22
+        assert result["year"] == TEST_YEAR
         assert result["name"] == "Dodger Stadium"
         assert result["active"] == 1
         # Location
@@ -52,9 +56,10 @@ class TestTransformVenue:
             with open(fixture_path) as f:
                 data = json.load(f)
 
-            result = transform_venue(data, "2024-07-01T00:00:00Z")
+            result = transform_venue(data, "2024-07-01T00:00:00Z", TEST_YEAR)
 
             assert result["id"] == 22
+            assert result["year"] == TEST_YEAR
             assert result["name"] == "Dodger Stadium"
             assert result["_fetched_at"] == "2024-07-01T00:00:00Z"
 
@@ -70,9 +75,10 @@ class TestTransformVenue:
             ]
         }
 
-        result = transform_venue(minimal_response, "2024-07-01T00:00:00Z")
+        result = transform_venue(minimal_response, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] == 999
+        assert result["year"] == TEST_YEAR
         assert result["name"] == "Test Stadium"
         assert result["active"] == 0
         assert result["city"] is None
@@ -81,16 +87,18 @@ class TestTransformVenue:
 
     def test_empty_response(self) -> None:
         """Test transformation with empty venues array."""
-        result = transform_venue({"venues": []}, "2024-07-01T00:00:00Z")
+        result = transform_venue({"venues": []}, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] is None
+        assert result["year"] == TEST_YEAR
         assert result["name"] is None
 
     def test_no_venues_key(self) -> None:
         """Test transformation with missing venues key."""
-        result = transform_venue({}, "2024-07-01T00:00:00Z")
+        result = transform_venue({}, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] is None
+        assert result["year"] == TEST_YEAR
         assert result["name"] is None
 
 
@@ -115,9 +123,10 @@ class TestTransformVenueFromGameFeed:
             "timeZone": {"id": "America/Los_Angeles"},
         }
 
-        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z")
+        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] == 22
+        assert result["year"] == TEST_YEAR
         assert result["name"] == "Dodger Stadium"
         assert result["city"] == "Los Angeles"
         assert result["latitude"] == 34.0739
@@ -133,9 +142,10 @@ class TestTransformVenueFromGameFeed:
             "name": "Dodger Stadium",
         }
 
-        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z")
+        result = transform_venue_from_game_feed(venue_data, "2024-07-01T00:00:00Z", TEST_YEAR)
 
         assert result["id"] == 22
+        assert result["year"] == TEST_YEAR
         assert result["name"] == "Dodger Stadium"
         assert result["city"] is None
         assert result["capacity"] is None

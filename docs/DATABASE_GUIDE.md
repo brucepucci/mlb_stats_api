@@ -85,7 +85,7 @@ teams (id) ←──┬── players (currentTeam_id)
               ├── game_pitching (team_id)
               └── game_rosters (team_id)
 
-venues (id) ←── games (venue_id)
+venues (id, year) ←── games (venue_id, season)
 
 players (id) ←──┬── game_batting (player_id)
                 ├── game_pitching (player_id)
@@ -124,11 +124,14 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | division_name | TEXT | Full division name |
 | active | INTEGER | 1=active, 0=inactive |
 
-### 2. `venues` - Stadium Data
+### 2. `venues` - Stadium Data (Per-Year)
+
+Venues are stored per-year to track changes between seasons (renovations, capacity changes, dimension adjustments).
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | INTEGER | MLB venue ID (PRIMARY KEY) |
+| id | INTEGER | MLB venue ID (COMPOSITE PRIMARY KEY with year) |
+| year | INTEGER | Year this data applies to (COMPOSITE PRIMARY KEY with id) |
 | name | TEXT | Stadium name ("Dodger Stadium") |
 | city | TEXT | City |
 | state | TEXT | State |
@@ -147,6 +150,8 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | rightLine | INTEGER | Right field line (feet) |
 | timeZone_id | TEXT | Time zone ("America/Los_Angeles") |
 | timeZone_offset | INTEGER | UTC offset (-8) |
+
+**PRIMARY KEY:** (id, year)
 
 ### 3. `players` - Player Biographical Data
 
@@ -185,8 +190,7 @@ pitches (gamePk, atBatIndex, pitchNumber) ←── batted_balls (FK)
 | away_score | INTEGER | Final away score |
 | home_score | INTEGER | Final home score |
 | abstractGameState | TEXT | 'Final', 'Live', 'Preview' |
-| venue_id | INTEGER | FK to venues.id |
-| venue_name | TEXT | Stadium name (denormalized) |
+| venue_id | INTEGER | FK to venues(id, year) with season |
 | dayNight | TEXT | 'day' or 'night' |
 | weather_condition | TEXT | "Clear", "Cloudy", etc. |
 | weather_temp | TEXT | Temperature |

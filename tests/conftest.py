@@ -93,7 +93,7 @@ def sample_game_feed() -> dict:
         "gamePk": 745927,
         "gameData": {
             "game": {"pk": 745927, "type": "R", "season": "2024"},
-            "datetime": {"dateTime": "2024-07-02T02:10:00Z"},
+            "datetime": {"dateTime": "2024-07-02T02:10:00Z", "officialDate": "2024-07-01"},
             "status": {"abstractGameState": "Final", "detailedState": "Final"},
             "teams": {
                 "away": {
