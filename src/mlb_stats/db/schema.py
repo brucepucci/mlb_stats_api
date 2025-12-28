@@ -739,7 +739,7 @@ CREATE TABLE IF NOT EXISTS sync_log (
 CREATE_SYNC_LOG_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_sync_log_type ON sync_log(sync_type);
 CREATE INDEX IF NOT EXISTS idx_sync_log_status ON sync_log(status);
-CREATE INDEX IF NOT EXISTS idx_sync_log_gamePk ON sync_log(gamePk);
+CREATE INDEX IF NOT EXISTS idx_sync_log_gamepk ON sync_log(gamePk);
 """
 
 
