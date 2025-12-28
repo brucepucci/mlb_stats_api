@@ -1,6 +1,6 @@
 """Date handling utilities for MLB Stats Collector."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 
 def parse_date(date_str: str) -> date:
@@ -38,29 +38,6 @@ def format_date(date_obj: date) -> str:
         Date string in YYYY-MM-DD format
     """
     return date_obj.strftime("%Y-%m-%d")
-
-
-def date_range(start: date, end: date) -> list[date]:
-    """Generate list of dates between start and end (inclusive).
-
-    Parameters
-    ----------
-    start : date
-        Start date (inclusive)
-    end : date
-        End date (inclusive)
-
-    Returns
-    -------
-    list[date]
-        List of dates from start to end
-    """
-    dates = []
-    current = start
-    while current <= end:
-        dates.append(current)
-        current += timedelta(days=1)
-    return dates
 
 
 def season_dates(year: int) -> tuple[str, str]:

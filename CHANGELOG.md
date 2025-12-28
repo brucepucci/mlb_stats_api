@@ -16,9 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Response caching for final game data
   - User-Agent header
 - File-based JSON cache for game data (not reference data)
-- Full database schema with all 11 tables:
-  - Reference tables: `teams`, `players`
-  - Game tables: `games`, `game_officials`, `game_batting`, `game_pitching`
+- Full database schema with all 13 tables:
+  - Reference tables: `teams`, `players`, `venues`
+  - Game tables: `games`, `game_officials`, `game_batting`, `game_pitching`, `game_rosters`
   - Pitch-level tables: `pitches`, `at_bats`, `batted_balls`
   - Operational: `sync_log`, `_meta`
 - CLI skeleton with Click:

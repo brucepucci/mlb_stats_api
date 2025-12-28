@@ -123,8 +123,7 @@ Core game information table. Cached only when game state is "Final".
 | seriesDescription | TEXT | Yes | `gameData.game.seriesDescription` | Series description |
 | seriesGameNumber | INTEGER | Yes | `gameData.game.seriesGameNumber` | Game number in series |
 | gamesInSeries | INTEGER | Yes | `gameData.game.gamesInSeries` | Total games in series |
-| umpire_HP_id | INTEGER | Yes | `liveData.boxscore.officials[type=Home Plate].official.id` | Home plate umpire ID |
-| umpire_HP_name | TEXT | Yes | `liveData.boxscore.officials[type=Home Plate].official.fullName` | Home plate umpire name |
+| umpire_HP_id | INTEGER | Yes | `liveData.boxscore.officials[type=Home Plate].official.id` | Home plate umpire ID (join to game_officials for name) |
 
 **Foreign Keys:**
 - `away_team_id` → `teams(id)`
@@ -267,11 +266,8 @@ Per-player batting statistics for each game.
 | sacFlies | INTEGER | Yes | `stats.batting.sacFlies` | Sacrifice flies |
 | catchersInterference | INTEGER | Yes | `stats.batting.catchersInterference` | Catcher's interference |
 | pickoffs | INTEGER | Yes | `stats.batting.pickoffs` | Picked off |
-| avg | TEXT | Yes | `stats.batting.avg` | Batting average (game) |
-| obp | TEXT | Yes | `stats.batting.obp` | On-base percentage (game) |
-| slg | TEXT | Yes | `stats.batting.slg` | Slugging percentage (game) |
-| ops | TEXT | Yes | `stats.batting.ops` | OPS (game) |
 | atBatsPerHomeRun | TEXT | Yes | `stats.batting.atBatsPerHomeRun` | At bats per home run |
+| stolenBasePercentage | TEXT | Yes | `stats.batting.stolenBasePercentage` | Stolen base percentage |
 
 **Foreign Keys:**
 - `gamePk` → `games(gamePk)`
@@ -340,8 +336,17 @@ Per-player pitching statistics for each game.
 | pickoffs | INTEGER | Yes | `stats.pitching.pickoffs` | Pickoffs |
 | inheritedRunners | INTEGER | Yes | `stats.pitching.inheritedRunners` | Inherited runners |
 | inheritedRunnersScored | INTEGER | Yes | `stats.pitching.inheritedRunnersScored` | Inherited runners scored |
-| era | TEXT | Yes | `stats.pitching.era` | ERA (game) |
-| whip | TEXT | Yes | `stats.pitching.whip` | WHIP (game) |
+| catchersInterference | INTEGER | Yes | `stats.pitching.catchersInterference` | Catcher's interference |
+| sacBunts | INTEGER | Yes | `stats.pitching.sacBunts` | Sacrifice bunts allowed |
+| sacFlies | INTEGER | Yes | `stats.pitching.sacFlies` | Sacrifice flies allowed |
+| passedBall | INTEGER | Yes | `stats.pitching.passedBall` | Passed balls |
+| gamesPitched | INTEGER | Yes | `stats.pitching.gamesPitched` | Games pitched |
+| completeGames | INTEGER | Yes | `stats.pitching.completeGames` | Complete games |
+| shutouts | INTEGER | Yes | `stats.pitching.shutouts` | Shutouts |
+| rbi | INTEGER | Yes | `stats.pitching.rbi` | RBIs allowed |
+| gamesFinished | INTEGER | Yes | `stats.pitching.gamesFinished` | Games finished |
+| runsScoredPer9 | TEXT | Yes | `stats.pitching.runsScoredPer9` | Runs per 9 innings |
+| homeRunsPer9 | TEXT | Yes | `stats.pitching.homeRunsPer9` | Home runs per 9 innings |
 | note | TEXT | Yes | `seasonStats.pitching.note` | Game decision (W, L, S, H, BS) |
 
 **Foreign Keys:**

@@ -88,30 +88,3 @@ def transform_venue(api_response: dict, fetched_at: str, year: int) -> dict:
     venues = api_response.get("venues", [])
     venue = venues[0] if venues else {}
     return _transform_venue_data(venue, fetched_at, year)
-
-
-def transform_venue_from_game_feed(
-    venue_data: dict, fetched_at: str, year: int
-) -> dict:
-    """Transform venue data from game feed to database row.
-
-    Parameters
-    ----------
-    venue_data : dict
-        Venue data from gameData.venue
-    fetched_at : str
-        ISO8601 timestamp when data was fetched
-    year : int
-        Year this venue data applies to (for composite PK)
-
-    Returns
-    -------
-    dict
-        Row data matching venues table schema
-
-    Notes
-    -----
-    Game feed venue data may not include all fields (especially fieldInfo).
-    Missing fields will be None.
-    """
-    return _transform_venue_data(venue_data, fetched_at, year)

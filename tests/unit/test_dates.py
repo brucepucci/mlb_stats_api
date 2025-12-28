@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from mlb_stats.utils.dates import date_range, format_date, parse_date, season_dates
+from mlb_stats.utils.dates import format_date, parse_date, season_dates
 
 
 class TestParseDate:
@@ -48,34 +48,6 @@ class TestFormatDate:
         """Test formatting with single digit month pads with zero."""
         result = format_date(date(2024, 1, 5))
         assert result == "2024-01-05"
-
-
-class TestDateRange:
-    """Tests for date_range function."""
-
-    def test_single_day(self) -> None:
-        """Test range with same start and end."""
-        result = date_range(date(2024, 7, 1), date(2024, 7, 1))
-        assert result == [date(2024, 7, 1)]
-
-    def test_week(self) -> None:
-        """Test week-long range."""
-        result = date_range(date(2024, 7, 1), date(2024, 7, 7))
-        assert len(result) == 7
-        assert result[0] == date(2024, 7, 1)
-        assert result[-1] == date(2024, 7, 7)
-
-    def test_cross_month(self) -> None:
-        """Test range crossing month boundary."""
-        result = date_range(date(2024, 6, 29), date(2024, 7, 2))
-        assert len(result) == 4
-        assert result[0] == date(2024, 6, 29)
-        assert result[-1] == date(2024, 7, 2)
-
-    def test_empty_when_end_before_start(self) -> None:
-        """Test empty range when end date is before start date."""
-        result = date_range(date(2024, 7, 7), date(2024, 7, 1))
-        assert result == []
 
 
 class TestSeasonDates:

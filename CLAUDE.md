@@ -13,7 +13,7 @@ A Python CLI application that collects MLB game data from the MLB Stats API and 
 1. **Preserve MLB field names exactly** - Database columns use MLB's naming (e.g., `gamePk`, `strikeOuts`, not `game_pk`, `strike_outs`)
 2. **Game-driven data collection** - Games are the source of truth; reference data (teams, venues, players) is fetched on-demand when encountered in game data
 3. **Always upsert** - Use `INSERT OR REPLACE` for all writes; never check if record exists first
-4. **Never cache reference data** - Players, teams, venues always fetched fresh to keep mutable fields current (`lastPlayedDate`, `currentTeam_id`, etc.)
+4. **Never cache reference data** - Players and teams always fetched fresh to keep mutable fields current (`lastPlayedDate`, `currentTeam_id`, etc.); venues cached per-year
 5. **Cache immutable game data** - Game feed, boxscore, play-by-play cached indefinitely once game is Final
 6. **Fail loudly** - Data quality issues should raise errors, not silently corrupt data
 
@@ -26,9 +26,9 @@ A Python CLI application that collects MLB game data from the MLB Stats API and 
 | Metadata columns | Underscore prefix | `_written_at`, `_git_hash`, `_version`, `_fetched_at` |
 | Flattened nested objects | Underscore separator | `primaryPosition.code` → `primaryPosition_code` |
 
-## Database Schema (12 Tables)
+## Database Schema (13 Tables)
 
-**Reference tables:** `teams`, `players`
+**Reference tables:** `teams`, `players`, `venues`
 **Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`, `game_rosters`
 **Pitch-level tables:** `pitches`, `at_bats`, `batted_balls`
 **Operational:** `sync_log`, `_meta`

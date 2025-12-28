@@ -53,9 +53,13 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
         game_date = datetime_info.get("dateTime", "")[:10]
 
     # Parse season as integer
-    season_str = game.get("season", "0")
+    # If season can't be determined, also clear venue_id to avoid FK violations
+    # (games.venue_id + games.season) references venues(id, year)
+    season_str = game.get("season")
+    season_valid = False
     try:
-        season = int(season_str)
+        season = int(season_str) if season_str else 0
+        season_valid = season > 0
     except (ValueError, TypeError):
         season = 0
 
@@ -73,7 +77,7 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
         "abstractGameState": status.get("abstractGameState"),
         "detailedState": status.get("detailedState"),
         "statusCode": status.get("statusCode"),
-        "venue_id": venue.get("id"),
+        "venue_id": venue.get("id") if season_valid else None,
         "dayNight": datetime_info.get("dayNight"),
         "scheduledInnings": game.get("scheduledInnings"),
         "inningCount": linescore.get("currentInning"),
@@ -89,7 +93,6 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
         "seriesGameNumber": game.get("seriesGameNumber"),
         "gamesInSeries": game.get("gamesInSeries"),
         "umpire_HP_id": hp_umpire.get("id"),
-        "umpire_HP_name": hp_umpire.get("fullName"),
         "_fetched_at": fetched_at,
     }
 

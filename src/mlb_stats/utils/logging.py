@@ -10,11 +10,13 @@ def configure_logging(verbosity: int = 0) -> None:
     ----------
     verbosity : int
         Verbosity level:
+        - -1 = ERROR (--quiet flag, errors only)
         - 0 = WARNING (default, progress bar + summary)
         - 1 = INFO (which games/players processing)
         - 2+ = DEBUG (API calls, SQL statements)
     """
     level = {
+        -1: logging.ERROR,  # --quiet flag
         0: logging.WARNING,
         1: logging.INFO,
     }.get(verbosity, logging.DEBUG)

@@ -26,7 +26,7 @@ class TestResponseCache:
 
     def test_cache_directory_structure(self, temp_cache_dir: Path) -> None:
         """Test that cache creates correct directory structure."""
-        cache = ResponseCache(temp_cache_dir)
+        _cache = ResponseCache(temp_cache_dir)  # noqa: F841
 
         # Check that directories were created for cacheable types
         for cache_type in CACHEABLE_TYPES:
