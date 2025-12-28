@@ -264,7 +264,7 @@ def sync(
             # Sync season range (either --all or --start-season/--end-season)
             success, failures = sync_season_range(start_season, end_season)
 
-            click.echo(f"\n=== All seasons complete ===")
+            click.echo("\n=== All seasons complete ===")
             click.echo(f"Total: {success} games synced, {failures} failures")
 
             if failures > 0:

@@ -44,6 +44,11 @@ CREATE TABLE IF NOT EXISTS teams (
 );
 """
 
+CREATE_TEAMS_INDICES = """
+CREATE INDEX IF NOT EXISTS idx_teams_abbreviation ON teams(abbreviation);
+CREATE INDEX IF NOT EXISTS idx_teams_division ON teams(division_id);
+"""
+
 
 CREATE_VENUES_TABLE = """
 CREATE TABLE IF NOT EXISTS venues (
@@ -155,6 +160,11 @@ CREATE TABLE IF NOT EXISTS players (
 );
 """
 
+CREATE_PLAYERS_INDICES = """
+CREATE INDEX IF NOT EXISTS idx_players_active ON players(active);
+CREATE INDEX IF NOT EXISTS idx_players_lastPlayedDate ON players(lastPlayedDate);
+"""
+
 CREATE_GAMES_TABLE = """
 CREATE TABLE IF NOT EXISTS games (
     gamePk INTEGER PRIMARY KEY,
@@ -208,9 +218,8 @@ CREATE TABLE IF NOT EXISTS games (
     seriesGameNumber INTEGER,
     gamesInSeries INTEGER,
 
-    -- Home plate umpire (denormalized for quick access)
+    -- Home plate umpire (FK to game_officials for name lookup)
     umpire_HP_id INTEGER,
-    umpire_HP_name TEXT,
 
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
@@ -321,6 +330,8 @@ CREATE_GAME_BATTING_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_game_batting_gamepk ON game_batting(gamePk);
 CREATE INDEX IF NOT EXISTS idx_game_batting_player ON game_batting(player_id);
 CREATE INDEX IF NOT EXISTS idx_game_batting_team ON game_batting(team_id);
+CREATE INDEX IF NOT EXISTS idx_game_batting_position ON game_batting(position_code);
+CREATE INDEX IF NOT EXISTS idx_game_batting_order ON game_batting(battingOrder);
 """
 
 CREATE_GAME_PITCHING_TABLE = """
@@ -407,6 +418,8 @@ CREATE_GAME_PITCHING_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_game_pitching_gamepk ON game_pitching(gamePk);
 CREATE INDEX IF NOT EXISTS idx_game_pitching_player ON game_pitching(player_id);
 CREATE INDEX IF NOT EXISTS idx_game_pitching_team ON game_pitching(team_id);
+CREATE INDEX IF NOT EXISTS idx_game_pitching_earnedRuns ON game_pitching(earnedRuns);
+CREATE INDEX IF NOT EXISTS idx_game_pitching_isStarter ON game_pitching(isStartingPitcher);
 """
 
 CREATE_PITCHES_TABLE = """
@@ -700,6 +713,7 @@ CREATE INDEX IF NOT EXISTS idx_at_bats_gamepk ON at_bats(gamePk);
 CREATE INDEX IF NOT EXISTS idx_at_bats_batter ON at_bats(batter_id);
 CREATE INDEX IF NOT EXISTS idx_at_bats_pitcher ON at_bats(pitcher_id);
 CREATE INDEX IF NOT EXISTS idx_at_bats_event ON at_bats(eventType);
+CREATE INDEX IF NOT EXISTS idx_at_bats_inning ON at_bats(inning);
 """
 
 CREATE_SYNC_LOG_TABLE = """
@@ -725,6 +739,7 @@ CREATE TABLE IF NOT EXISTS sync_log (
 CREATE_SYNC_LOG_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_sync_log_type ON sync_log(sync_type);
 CREATE INDEX IF NOT EXISTS idx_sync_log_status ON sync_log(status);
+CREATE INDEX IF NOT EXISTS idx_sync_log_gamepk ON sync_log(gamePk);
 """
 
 
@@ -747,6 +762,7 @@ def create_tables(conn: sqlite3.Connection) -> None:
 
     # 2. teams (no dependencies)
     cursor.execute(CREATE_TEAMS_TABLE)
+    cursor.executescript(CREATE_TEAMS_INDICES)
 
     # 3. venues (no dependencies)
     cursor.execute(CREATE_VENUES_TABLE)
@@ -754,6 +770,7 @@ def create_tables(conn: sqlite3.Connection) -> None:
 
     # 4. players (depends on teams)
     cursor.execute(CREATE_PLAYERS_TABLE)
+    cursor.executescript(CREATE_PLAYERS_INDICES)
 
     # 5. games (depends on teams, venues)
     cursor.execute(CREATE_GAMES_TABLE)

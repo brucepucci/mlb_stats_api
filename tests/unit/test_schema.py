@@ -10,7 +10,7 @@ class TestCreateTables:
     """Tests for create_tables function."""
 
     def test_all_tables_created(self, temp_db: sqlite3.Connection) -> None:
-        """Test that all 12 tables plus _meta are created."""
+        """Test that all 13 tables are created."""
         cursor = temp_db.cursor()
         cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"

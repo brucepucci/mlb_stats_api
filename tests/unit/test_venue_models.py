@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from mlb_stats.models.venue import transform_venue, transform_venue_from_game_feed
+from mlb_stats.models.venue import transform_venue
 
 # Test year for venue composite PK
 TEST_YEAR = 2024
@@ -100,56 +100,3 @@ class TestTransformVenue:
         assert result["id"] is None
         assert result["year"] == TEST_YEAR
         assert result["name"] is None
-
-
-class TestTransformVenueFromGameFeed:
-    """Tests for transform_venue_from_game_feed function."""
-
-    def test_game_feed_venue_data(self) -> None:
-        """Test transformation from game feed venue data."""
-        venue_data = {
-            "id": 22,
-            "name": "Dodger Stadium",
-            "active": True,
-            "location": {
-                "city": "Los Angeles",
-                "state": "California",
-                "stateAbbrev": "CA",
-                "defaultCoordinates": {
-                    "latitude": 34.0739,
-                    "longitude": -118.24,
-                },
-            },
-            "timeZone": {"id": "America/Los_Angeles"},
-        }
-
-        result = transform_venue_from_game_feed(
-            venue_data, "2024-07-01T00:00:00Z", TEST_YEAR
-        )
-
-        assert result["id"] == 22
-        assert result["year"] == TEST_YEAR
-        assert result["name"] == "Dodger Stadium"
-        assert result["city"] == "Los Angeles"
-        assert result["latitude"] == 34.0739
-        assert result["timeZone_id"] == "America/Los_Angeles"
-        # fieldInfo not present in game feed
-        assert result["capacity"] is None
-        assert result["leftLine"] is None
-
-    def test_minimal_game_feed_data(self) -> None:
-        """Test transformation from minimal game feed venue data."""
-        venue_data = {
-            "id": 22,
-            "name": "Dodger Stadium",
-        }
-
-        result = transform_venue_from_game_feed(
-            venue_data, "2024-07-01T00:00:00Z", TEST_YEAR
-        )
-
-        assert result["id"] == 22
-        assert result["year"] == TEST_YEAR
-        assert result["name"] == "Dodger Stadium"
-        assert result["city"] is None
-        assert result["capacity"] is None

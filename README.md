@@ -17,8 +17,8 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mlb-stats.git
-cd mlb-stats
+git clone https://github.com/brucepucci/mlb_stats_api.git
+cd mlb_stats_api
 
 # Install dependencies
 uv sync
@@ -226,11 +226,11 @@ src/mlb_stats/
 
 ## Database Schema
 
-The database contains 11 tables:
+The database contains 13 tables:
 
-**Reference tables:** `teams`, `players`
+**Reference tables:** `teams`, `players`, `venues`
 
-**Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`
+**Game tables:** `games`, `game_officials`, `game_batting`, `game_pitching`, `game_rosters`
 
 **Pitch-level tables:** `pitches`, `at_bats`, `batted_balls`
 

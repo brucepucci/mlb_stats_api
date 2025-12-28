@@ -391,6 +391,7 @@ Cache raw JSON responses to avoid redundant API calls. **Only cache immutable ga
 | Schedule | No | Games can be postponed/rescheduled |
 | Players | **No** | `lastPlayedDate`, `currentTeam_id`, `active` change frequently |
 | Teams | **No** | Division can change mid-season |
+| Venues | **Per-year** | Semi-static; tracked per season for renovations |
 
 Reference data API calls are lightweight. With 0.5s rate limiting, fetching 50 unique players in a day's games adds ~25 seconds. Worth it for accurate data.
 
@@ -1337,7 +1338,7 @@ mlb-stats-collector/
 6. Create basic CLI skeleton
 7. Set up pytest infrastructure
 8. Initialize GitHub Actions CI
-9. **Create full database schema (all 11 tables)**
+9. **Create full database schema (all 13 tables)**
 10. Implement schema creation/migration logic
 
 **File Deliverables:**
@@ -1391,7 +1392,7 @@ tests/
 - [ ] `make test` passes with >90% coverage on new code
 - [ ] `mlb-stats --version` prints version number
 - [ ] `mlb-stats --help` shows available commands
-- [ ] `mlb-stats init-db` creates database with all 11 tables
+- [ ] `mlb-stats init-db` creates database with all 13 tables
 - [ ] Schema version stored in `_meta` table
 - [ ] Unit test: client retries on HTTP 500
 - [ ] Unit test: client respects rate limit delay
