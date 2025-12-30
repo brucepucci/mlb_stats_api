@@ -37,9 +37,6 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
     boxscore = live_data.get("boxscore", {})
     boxscore_info = boxscore.get("info", [])
 
-    # Extract home plate umpire from officials
-    hp_umpire = _extract_home_plate_umpire(boxscore.get("officials", []))
-
     # Get final score from linescore
     linescore = live_data.get("linescore", {})
 
@@ -92,7 +89,6 @@ def transform_game(game_feed: dict, fetched_at: str) -> dict:
         "seriesDescription": game.get("seriesDescription"),
         "seriesGameNumber": game.get("seriesGameNumber"),
         "gamesInSeries": game.get("gamesInSeries"),
-        "umpire_HP_id": hp_umpire.get("id"),
         "_fetched_at": fetched_at,
     }
 

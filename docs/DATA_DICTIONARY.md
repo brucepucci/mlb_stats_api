@@ -123,7 +123,6 @@ Core game information table. Cached only when game state is "Final".
 | seriesDescription | TEXT | Yes | `gameData.game.seriesDescription` | Series description |
 | seriesGameNumber | INTEGER | Yes | `gameData.game.seriesGameNumber` | Game number in series |
 | gamesInSeries | INTEGER | Yes | `gameData.game.gamesInSeries` | Total games in series |
-| umpire_HP_id | INTEGER | Yes | `liveData.boxscore.officials[type=Home Plate].official.id` | Home plate umpire ID (join to game_officials for name) |
 
 **Foreign Keys:**
 - `away_team_id` → `teams(id)`

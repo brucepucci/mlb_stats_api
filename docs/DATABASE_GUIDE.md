@@ -198,8 +198,6 @@ Venues are stored per-year to track changes between seasons (renovations, capaci
 | attendance | INTEGER | Crowd size |
 | doubleHeader | TEXT | Y/N/S |
 | gameNumber | INTEGER | 1 or 2 for doubleheaders |
-| umpire_HP_id | INTEGER | Home plate umpire ID |
-| umpire_HP_name | TEXT | Home plate umpire name |
 
 ### 5. `game_batting` - Per-Game Batting Stats
 
@@ -640,15 +638,16 @@ GROUP BY pit.pitchHand_code;
 ```sql
 -- Called strike rate by umpire
 SELECT
-    g.umpire_HP_name,
+    go.official_fullName as umpire_name,
     COUNT(*) as pitches_called,
     SUM(CASE WHEN p.call_code = 'C' THEN 1 ELSE 0 END) as called_strikes,
     ROUND(100.0 * SUM(CASE WHEN p.call_code = 'C' THEN 1 ELSE 0 END) / COUNT(*), 1) as K_rate
 FROM pitches p
 JOIN games g ON p.gamePk = g.gamePk
+JOIN game_officials go ON g.gamePk = go.gamePk AND go.officialType = 'Home Plate'
 WHERE p.call_code IN ('B', 'C')  -- Only called pitches (not swings)
   AND g.gameType = 'R'           -- Regular season only
-GROUP BY g.umpire_HP_id
+GROUP BY go.official_id
 HAVING COUNT(*) >= 200
 ORDER BY K_rate DESC;
 ```
