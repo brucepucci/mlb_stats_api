@@ -742,6 +742,23 @@ CREATE INDEX IF NOT EXISTS idx_sync_log_status ON sync_log(status);
 CREATE INDEX IF NOT EXISTS idx_sync_log_gamepk ON sync_log(gamePk);
 """
 
+# Covering indexes - include frequently-accessed columns to avoid table lookups
+CREATE_COVERING_INDICES = """
+-- Player batting stats aggregation (common query pattern)
+CREATE INDEX IF NOT EXISTS idx_game_batting_player_stats
+  ON game_batting(player_id, gamePk, hits, homeRuns, rbi, strikeOuts, baseOnBalls);
+
+-- Pitcher game scores (calculated frequently for fantasy/analysis)
+CREATE INDEX IF NOT EXISTS idx_game_pitching_starter_stats
+  ON game_pitching(player_id, gamePk, outs, strikeOuts, hits, earnedRuns, baseOnBalls, homeRuns)
+  WHERE pitchingOrder = 1;
+
+-- Exit velocity leaders (Statcast queries)
+CREATE INDEX IF NOT EXISTS idx_batted_balls_ev_leaders
+  ON batted_balls(batter_id, launchSpeed)
+  WHERE launchSpeed IS NOT NULL;
+"""
+
 
 def create_tables(conn: sqlite3.Connection) -> None:
     """Create all database tables.
@@ -807,6 +824,9 @@ def create_tables(conn: sqlite3.Connection) -> None:
     # 13. sync_log (no dependencies)
     cursor.execute(CREATE_SYNC_LOG_TABLE)
     cursor.executescript(CREATE_SYNC_LOG_INDICES)
+
+    # Covering indexes for common query patterns
+    cursor.executescript(CREATE_COVERING_INDICES)
 
     conn.commit()
 
