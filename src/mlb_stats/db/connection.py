@@ -16,6 +16,8 @@ def get_connection(db_path: str | Path) -> sqlite3.Connection:
     - Foreign keys enabled
     - WAL journal mode for better concurrency
     - 64MB cache size for performance
+    - Temp tables stored in memory
+    - 256MB memory-mapped I/O for faster reads
 
     Parameters
     ----------
@@ -41,6 +43,8 @@ def get_connection(db_path: str | Path) -> sqlite3.Connection:
     cursor.execute("PRAGMA synchronous = NORMAL")
     cursor.execute("PRAGMA foreign_keys = ON")
     cursor.execute("PRAGMA cache_size = -64000")  # 64MB cache
+    cursor.execute("PRAGMA temp_store = MEMORY")  # Temp tables in memory
+    cursor.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
 
     logger.debug("Connected to database: %s", db_path)
 
