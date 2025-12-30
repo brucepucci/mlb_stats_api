@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE_TEAMS_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_teams_abbreviation ON teams(abbreviation);
 CREATE INDEX IF NOT EXISTS idx_teams_division ON teams(division_id);
+CREATE INDEX IF NOT EXISTS idx_teams_name ON teams(name);
 """
 
 
@@ -163,6 +164,8 @@ CREATE TABLE IF NOT EXISTS players (
 CREATE_PLAYERS_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_players_active ON players(active);
 CREATE INDEX IF NOT EXISTS idx_players_lastPlayedDate ON players(lastPlayedDate);
+CREATE INDEX IF NOT EXISTS idx_players_name ON players(fullName);
+CREATE INDEX IF NOT EXISTS idx_players_team ON players(currentTeam_id);
 """
 
 CREATE_GAMES_TABLE = """
@@ -242,6 +245,9 @@ CREATE INDEX IF NOT EXISTS idx_games_away_team ON games(away_team_id);
 CREATE INDEX IF NOT EXISTS idx_games_home_team ON games(home_team_id);
 CREATE INDEX IF NOT EXISTS idx_games_venue ON games(venue_id);
 CREATE INDEX IF NOT EXISTS idx_games_venue_season ON games(venue_id, season);
+CREATE INDEX IF NOT EXISTS idx_games_type ON games(gameType);
+CREATE INDEX IF NOT EXISTS idx_games_state ON games(abstractGameState);
+CREATE INDEX IF NOT EXISTS idx_games_season_type ON games(season, gameType);
 """
 
 CREATE_GAME_OFFICIALS_TABLE = """
@@ -265,6 +271,7 @@ CREATE TABLE IF NOT EXISTS game_officials (
 
 CREATE_GAME_OFFICIALS_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_game_officials_gamepk ON game_officials(gamePk);
+CREATE INDEX IF NOT EXISTS idx_game_officials_official ON game_officials(official_id);
 """
 
 CREATE_GAME_BATTING_TABLE = """
@@ -332,6 +339,7 @@ CREATE INDEX IF NOT EXISTS idx_game_batting_player ON game_batting(player_id);
 CREATE INDEX IF NOT EXISTS idx_game_batting_team ON game_batting(team_id);
 CREATE INDEX IF NOT EXISTS idx_game_batting_position ON game_batting(position_code);
 CREATE INDEX IF NOT EXISTS idx_game_batting_order ON game_batting(battingOrder);
+CREATE INDEX IF NOT EXISTS idx_game_batting_player_game ON game_batting(player_id, gamePk);
 """
 
 CREATE_GAME_PITCHING_TABLE = """
@@ -420,6 +428,8 @@ CREATE INDEX IF NOT EXISTS idx_game_pitching_player ON game_pitching(player_id);
 CREATE INDEX IF NOT EXISTS idx_game_pitching_team ON game_pitching(team_id);
 CREATE INDEX IF NOT EXISTS idx_game_pitching_earnedRuns ON game_pitching(earnedRuns);
 CREATE INDEX IF NOT EXISTS idx_game_pitching_isStarter ON game_pitching(isStartingPitcher);
+CREATE INDEX IF NOT EXISTS idx_game_pitching_order ON game_pitching(pitchingOrder);
+CREATE INDEX IF NOT EXISTS idx_game_pitching_player_game ON game_pitching(player_id, gamePk);
 """
 
 CREATE_PITCHES_TABLE = """
@@ -537,6 +547,8 @@ CREATE INDEX IF NOT EXISTS idx_pitches_atbat ON pitches(gamePk, atBatIndex);
 CREATE INDEX IF NOT EXISTS idx_pitches_type ON pitches(type_code);
 CREATE INDEX IF NOT EXISTS idx_pitches_spin ON pitches(spinRate);
 CREATE INDEX IF NOT EXISTS idx_pitches_velo ON pitches(startSpeed);
+CREATE INDEX IF NOT EXISTS idx_pitches_pitcher_type ON pitches(pitcher_id, type_code);
+CREATE INDEX IF NOT EXISTS idx_pitches_call ON pitches(call_code);
 """
 
 CREATE_BATTED_BALLS_TABLE = """
@@ -608,6 +620,8 @@ CREATE INDEX IF NOT EXISTS idx_batted_balls_exit_velo ON batted_balls(launchSpee
 CREATE INDEX IF NOT EXISTS idx_batted_balls_launch_angle ON batted_balls(launchAngle);
 CREATE INDEX IF NOT EXISTS idx_batted_balls_trajectory ON batted_balls(trajectory);
 CREATE INDEX IF NOT EXISTS idx_batted_balls_event ON batted_balls(eventType);
+CREATE INDEX IF NOT EXISTS idx_batted_balls_batter_ev ON batted_balls(batter_id, launchSpeed);
+CREATE INDEX IF NOT EXISTS idx_batted_balls_game_atbat ON batted_balls(gamePk, atBatIndex);
 """
 
 CREATE_GAME_ROSTERS_TABLE = """
@@ -714,6 +728,7 @@ CREATE INDEX IF NOT EXISTS idx_at_bats_batter ON at_bats(batter_id);
 CREATE INDEX IF NOT EXISTS idx_at_bats_pitcher ON at_bats(pitcher_id);
 CREATE INDEX IF NOT EXISTS idx_at_bats_event ON at_bats(eventType);
 CREATE INDEX IF NOT EXISTS idx_at_bats_inning ON at_bats(inning);
+CREATE INDEX IF NOT EXISTS idx_at_bats_game_index ON at_bats(gamePk, atBatIndex);
 """
 
 CREATE_SYNC_LOG_TABLE = """
@@ -740,6 +755,7 @@ CREATE_SYNC_LOG_INDICES = """
 CREATE INDEX IF NOT EXISTS idx_sync_log_type ON sync_log(sync_type);
 CREATE INDEX IF NOT EXISTS idx_sync_log_status ON sync_log(status);
 CREATE INDEX IF NOT EXISTS idx_sync_log_gamepk ON sync_log(gamePk);
+CREATE INDEX IF NOT EXISTS idx_sync_log_started ON sync_log(started_at);
 """
 
 
