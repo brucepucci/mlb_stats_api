@@ -583,11 +583,7 @@ CREATE TABLE games (
     seriesDescription TEXT,
     seriesGameNumber INTEGER,
     gamesInSeries INTEGER,
-    
-    -- Home plate umpire (denormalized for quick access)
-    umpire_HP_id INTEGER,
-    umpire_HP_name TEXT,
-    
+
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
     
@@ -607,7 +603,7 @@ CREATE INDEX idx_games_home_team ON games(home_team_id);
 ```
 
 #### `game_officials`
-Umpires and other officials for each game. Note: The home plate umpire is also denormalized onto the `games` table (`umpire_HP_id`, `umpire_HP_name`) for quick access in pitch analysis queries. This table contains the complete crew for advanced umpire analysis.
+Umpires and other officials for each game. This is the canonical source for umpire data - join to this table for umpire analysis queries.
 
 ```sql
 CREATE TABLE game_officials (
@@ -1228,18 +1224,19 @@ ORDER BY barrel_pct DESC
 LIMIT 20;
 ```
 
-**Called strike rate by home plate umpire (no JOIN needed):**
+**Called strike rate by home plate umpire:**
 ```sql
-SELECT 
-    g.umpire_HP_name,
+SELECT
+    go.official_fullName as umpire_name,
     COUNT(*) as pitches_called,
     SUM(CASE WHEN p.call_code = 'C' THEN 1 ELSE 0 END) as called_strikes,
     ROUND(100.0 * SUM(CASE WHEN p.call_code = 'C' THEN 1 ELSE 0 END) / COUNT(*), 1) as called_strike_pct
 FROM pitches p
 JOIN games g ON p.gamePk = g.gamePk
+JOIN game_officials go ON g.gamePk = go.gamePk AND go.officialType = 'Home Plate'
 WHERE p.call_code IN ('B', 'C')  -- Only called balls and strikes
   AND g.season = 2024
-GROUP BY g.umpire_HP_id
+GROUP BY go.official_id
 HAVING pitches_called >= 1000
 ORDER BY called_strike_pct DESC;
 ```

@@ -218,9 +218,6 @@ CREATE TABLE IF NOT EXISTS games (
     seriesGameNumber INTEGER,
     gamesInSeries INTEGER,
 
-    -- Home plate umpire (FK to game_officials for name lookup)
-    umpire_HP_id INTEGER,
-
     -- API fetch metadata
     _fetched_at TEXT NOT NULL,
 
